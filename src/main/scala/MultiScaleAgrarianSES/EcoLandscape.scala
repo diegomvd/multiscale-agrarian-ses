@@ -32,24 +32,28 @@ import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
  *       as argument to a bunch of functions
 */
 case class EcoLandscape(
-  composition: Graph[EcoUnit,UnDiEdge],
-  size: Int,
-  ecr: Int,
-  scal_exp: Double,
-  yes: Double,
-  his: Double,
-  s_rec: Double,
-  s_deg: Double,
-  s_flo: Double)
+                         composition: Graph[(Long,EcoUnit),UnDiEdge],
+                         size: Int,
+                         ecr: Int,
+                         scal_exp: Double,
+                         yes: Double,
+                         his: Double,
+                         s_rec: Double,
+                         s_deg: Double,
+                         s_flo: Double)
   extends BaseLandscape[EcoUnit] with Agriculture with EcoServices with SpontaneousPropensities with SpatialStochasticEvents :
 
     /**
      * Updates land cover in multiple units following a conversion event.
-     * @param vids is a collection of VertexIDs to be updated in cover
-     * @param cover is the new cover
+     * @param old_units is a collection of VertexIDs to be updated in cover
+     * @param new_units is the new cover
      * @return an updated EcoLandscape
      **/
-    def update(old_units: ParVector[EcoUnit], new_units: ParVector[EcoUnit]): EcoLandscape =
+    def update(
+                old_units: Vector[EcoUnit],
+                new_units: Vector[EcoUnit]
+              ):
+    EcoLandscape =
       val comp = this.updateComposition(old_units,new_units)
       this.copy(composition = comp)
 
@@ -59,7 +63,11 @@ case class EcoLandscape(
      * @param cover is the new cover
      * @return an updated EcoLandscape
      * */
-    def update(old_unit: EcoUnit, new_unit: EcoUnit): EcoLandscape =
+    def update(
+                old_unit: EcoUnit,
+                new_unit: EcoUnit
+              ):
+    EcoLandscape =
       val comp = this.updateComposition(old_unit,new_unit)
       this.copy(composition = comp)
 
@@ -70,56 +78,62 @@ case class EcoLandscape(
      * ecological level. Type of resulting land cover is determined by the strategy in the management unit where the
      * transition happens.
      * @param x_rnd the random number to sample the probability distribution.
-     * @param ival initial value to calculate the propensity in each MngUnit.
+     * @param i_val initial value to calculate the propensity in each MngUnit.
      * @param pln the planning landscape.
      * @param mng the management landscape.
      * @param tcp the total conversion propensity.
      * @return a tuple with the unit's VertexIds and the resulting cover.
      * */
     def resolveConversionEvent(
-      x_rnd: Double,
-      ival: Double,
-      pln: PlnLandscape,
-      mng: MngLandscape,
-      tcp: Double):
-    (ParVector[EcoUnit], ParVector[EcoUnit]) =
+                                x_rnd: Double,
+                                i_val: Double,
+                                pln: PlnLandscape,
+                                mng: MngLandscape,
+                                tcp: Double
+                              ):
+    (Vector[Long], Vector[EcoUnit]) =
+      // First calculate the conversion propensity in each management unit
+      val mngP: ListMap[MngUnit, Double] = mng.propensityOfMngUnits(i_val, tcp, pln.composition, this.composition)
+      // Then select the management unit
+      val mngU: MngUnit = mng.selectUnit(x_rnd, mngP)
 
-      // calculating propensities of management units and selecting the unit
-      // where conversion will take place
-      val mngp: ListMap[MngUnit, Double] =
-      mng.propensityOfMngUnits(ival, tcp, pln.composition, this.composition)
-      val mid: VertexId =
-        mng.selectVId(x_rnd, mngp)
+      // Get the upper boundary for the propensity of the planning units that belong to the selected management unit
+      val max: Double = mngP.getOrElse(mngU,0.0) // should warn that 0.0 means something went wrong
 
-      val max: Double = mngp.getOrElse(mid,0.0) // should warn that 0.0 means something went wrong
+      // The approach is based on the fact that every management unit has can be selected with equal probability, thus
+      // the propensity lower bound for a planning unit within the management unit can be obtained by subtracting the
+      // the total propensity of a management unit to the maximum of the selected management unit.
+      // TODO: note that if the unit was selected based on id the min can be found by accessing the unit with id - 1!
+      val unitP: Double = mngP.head._2
+      val min: Double = max - unitP
 
-      // this approach works because every management unit can be selected with
-      // uniform probability: every unit has the same total conversion propensity.
-      // Else it is needed to access the previous element
-      val utcp: Double = mngp.head._2
-      val ival2: Double = max - utcp
+      // Calculate the propensities of planning units within the selected management unit
+      val plnP: ListMap[PlnUnit, Double] =
+        mngU.propensityOfPlnUnits(min, unitP, pln, this.composition)
+      // Select a planning unit for conversion
+      val plnU: PlnUnit = pln.selectUnit(x_rnd, plnP)
 
-      // calculating propensities of planning units within the management unit
-      // and selecting the one to be converted
-      val plnp: ListMap[VertexId, Double] =
-      mng.composition.vertices.lookup(mid).head.propensityOfPlnUnits(ival2, utcp, pln, this.composition)
-      val pid: VertexId =
-        pln.selectVId(x_rnd, plnp)
+      // Finally, get the Ids of the ecological units to convert to agriculture from the planning unit composition
+      val ecoIds: Vector[Long] = plnU.composition
+      mngU.strategy match
+        case MngStrategy.LandSharing => (ecoIds, ecoIds.map( EcoUnit(_, LandCover.LowIntensity) ) )
+        case MngStrategy.LandSparing => (ecoIds, ecoIds.map( EcoUnit(_, LandCover.HighIntensity) ) )
 
-      val vids: ParVector[VertexId] = pln.composition.vertices.lookup(pid).head.composition
-      mng.composition.vertices.lookup(mid).head.strategy match {
-        case MngStrategy.LandSharing => (vids, EcoUnit(LandCover.LowIntensity) )
-        case MngStrategy.LandSparing => (vids, EcoUnit(LandCover.HighIntensity) )
-      }
 
-    def initialize(pln: PlnLandscape, mng: MngLandscape, fagr: Double, fdeg: Double): EcoLandscape =
-      EcoLandscape.initialize(this,pln,mng,fagr,fdeg)
+    def initialize(
+                    pln: PlnLandscape,
+                    mng: MngLandscape,
+                    f_agr: Double,
+                    f_deg: Double
+                  ):
+    EcoLandscape =
+      EcoLandscape.initialize(this,pln,mng,f_agr,f_deg)
 
-    def countNatural: Int = this.composition.vertices.filter( (_,eu) => eu.matchCover(LandCover.Natural) ).count.toInt
-    def countDegraded: Int = this.composition.vertices.filter( (_,eu) => eu.matchCover(LandCover.Degraded) ).count.toInt
-    def countAgriculturalLI: Int = this.composition.vertices.filter( (_,eu) => eu.matchCover(LandCover.LowIntensity) ).count.toInt
-    def countAgriculturalHI: Int = this.composition.vertices.filter( (_,eu) => eu.matchCover(LandCover.HighIntensity) ).count.toInt
-    def countAgricultural: Int = this.countAgriculturalLI + this.countAgriculturalHI
+    def countNatural: Int = this.composition.nodes.toOuter.count{ case (_,u) => u.matchCover(LandCover.Natural) }
+    def countDegraded: Int = this.composition.nodes.toOuter.count{ case (_,u) => u.matchCover(LandCover.Degraded) }
+    def countAgriculturalLo: Int = this.composition.nodes.toOuter.count{ case (_,u) => u.matchCover(LandCover.LowIntensity) }
+    def countAgriculturalHi: Int = this.composition.nodes.toOuter.count{ case (_,u) => u.matchCover(LandCover.HighIntensity) }
+    def countAgricultural: Int = this.countAgriculturalLo + this.countAgriculturalHi
 
 object EcoLandscape :
 
@@ -140,14 +154,15 @@ object EcoLandscape :
   */
 
   def apply(
-    r: Int,
-    ecr: Int,
-    scal_exp: Double,
-    yes: Double,
-    his: Double,
-    s_rec: Double,
-    s_deg: Double,
-    s_flo: Double):
+             r: Int,
+             ecr: Int,
+             scal_exp: Double,
+             yes: Double,
+             his: Double,
+             s_rec: Double,
+             s_deg: Double,
+             s_flo: Double
+           ):
   EcoLandscape =
     val comp = buildComposition(r,ecr)
     EcoLandscape(comp,ModCo.area(r),ecr,scal_exp,yes,his,s_rec,s_deg,s_flo)
@@ -159,16 +174,17 @@ object EcoLandscape :
   @return the biophysical composition graph with every unit in a natural state
   */
   def buildComposition(
-    r: Int,
-    ecr: Int): 
-  Graph[EcoUnit, UnDiEdge] =
-    // first create a list of nodes to feed to the graph constructor
-    val nodes: List[EcoUnit] =
-      ModCo.apply(r).map { m => EcoUnit(m.toLong,LandCover.Natural) }.toList
-    // now use the list of nodes to create a list of existing edges based on neighborhood
+                        r: Int,
+                        ecr: Int
+                      ):
+  Graph[(Long,EcoUnit), UnDiEdge] =
+    // First create a list of nodes to feed to the graph constructor
+    val nodes: List[(Long,EcoUnit)] =
+      ModCo.apply(r).map { m => (m.toLong,EcoUnit(m.toLong,LandCover.Natural)) }
+    // Now use the list of nodes to create a list of existing edges based on neighborhood
     val edges: List[UnDiEdge] =
       nodes.toSet.subsets(2).collect{
-          case s if ModCo.neighbors(s.head.id,r,ecr).contains(s.last.id) =>
+          case s if ModCo.neighbors(s.head._1,r,ecr).contains(s.last._1) =>
             UnDiEdge( s.head, s.last )
         }.toList
     // instantiate the graph
@@ -180,94 +196,101 @@ object EcoLandscape :
   @return a biophysical landscape initialized according to the simulation parameter values
   */
   def initialize(
-    eco: EcoLandscape,
-    pln: PlnLandscape,
-    mng: MngLandscape,
-    fagr: Double,
-    fdeg: Double):
+                  eco: EcoLandscape,
+                  pln: PlnLandscape,
+                  mng: MngLandscape,
+                  f_agr: Double,
+                  f_deg: Double
+                ):
+  EcoLandscape =
+    /**
+    TODO: check this
+    */
+    def initializeAgriculturalUnit(
+                                    eco: EcoLandscape,
+                                    pln: PlnLandscape,
+                                    mng: MngLandscape
+                                  ):
     EcoLandscape =
-      /**
-      TODO: check this
-      */
-      def initializeAgriculturalUnit(
-        eco: EcoLandscape,
-        pln: PlnLandscape,
-        mng: MngLandscape):
-      EcoLandscape =
-        val x_rnd: Double = rnd.nextDouble( )
-        val res = eco.resolveConversionEvent(x_rnd,0.0,pln,mng,1.0)
-        eco.update(res._1,res._2)
+      val x_rnd: Double = rnd.nextDouble( )
+      val res = eco.resolveConversionEvent(x_rnd,0.0,pln,mng,1.0)
+      eco.update(res._1,res._2)
 
-      // TODO: update function takes vid independently of EcoUnit, now the vid is in the EcoUnit
-      def initializeDegradedUnit(eco: EcoLandscape): EcoLandscape =
-        val propensity = eco.degradationPropensity(0.0, eco.ecoServices , 1.0)
-        val x_rnd = rnd.between(0.0,propensity.last._2)
-        val vid = eco.selectVId(x_rnd,propensity)
-        eco.update(vid, EcoUnit(LandCover.Degraded))
-    
-      /**
-      @param n is a tuple with the number of remaining agricultural units to put first and the remaining degraded units second
-      @param transition is the type of transition that was simulated
-      @param step is the number of units that have transitioned
-      @return a new tuple with the updated numbers
-      */
-      def updateRemaining(
-        n: (Int,Int),
-        transition: EventType,
-        step: Int):
-      (Int,Int) =
-        transition match{
-          case EventType.Conversion =>
-            val upd_n_deg = n._2
-            if n._1>0 then {
-              val upd_n_agr = n._1 - step
-              (upd_n_agr,upd_n_deg)
-            }
-            else {
-              val upd_n_agr = n._1
-              (upd_n_agr,upd_n_deg)
-            }
-          case EventType.Degradation =>
-            val upd_n_agr = n._1
-            if n._2>0 then {
-              val upd_n_deg = n._2 - step
-              (upd_n_agr,upd_n_deg)
-            }
-            else {
-              val upd_n_deg = n._1
-              (upd_n_agr, upd_n_deg)
-            }
-        }
+    // TODO: it remains to be decided if using selection, and thus propensity calculation over ids or units themselves
+    //  the spontaneous propensities page needs to be updated if this is ever done on the units and the functions should
+    //  take LandscapeUnits as arguments if this ever works
+    def initializeDegradedUnit(
+                                eco: EcoLandscape
+                              ):
+    EcoLandscape =
+      val propensity: ListMap[EcoUnit,Double] = eco.degradationPropensity(0.0, eco.ecoServices , 1.0)
+      val x_rnd: Double = rnd.between(0.0,propensity.last._2)
+      val ecoU = eco.selectUnit(x_rnd,propensity)
+      eco.update(ecoU, EcoUnit(ecoU.id, LandCover.Degraded))
 
-      @tailrec
-      def rec(
-        eco: EcoLandscape,
-        pln: PlnLandscape,
-        mng: MngLandscape,
-        n_agr: Int,
-        n_deg: Int): 
-        EcoLandscape =
-          val n: Int = n_agr + n_deg
-          if n==0 then eco 
-          else {
-            rnd.nextInt(n) match {
-              case n_rnd if n_rnd<n_agr =>  // Conversion transition is chosen
-                val old_agr: Int = eco.countAgricultural
-                val upd_eco: EcoLandscape = initializeAgriculturalUnit(eco, pln, mng)
-                val new_agr: Int = upd_eco.countAgricultural
-                val step: Int = new_agr - old_agr
-                val n_remaining: (Int,Int) = updateRemaining((n_agr,n_deg),EventType.Conversion,step)
-                rec(upd_eco, pln, mng, n_remaining._1, n_remaining._2)
-              
-              case n_rnd if n_rnd<n_deg =>  // Degradation transition is chosen
-                val upd_eco = initializeDegradedUnit(eco)
-                val n_remaining: (Int,Int) = updateRemaining((n_agr,n_deg),EventType.Degradation,1)
-                rec(upd_eco, pln, mng, n_remaining._1, n_remaining._2)
-            }
+    /**
+    @param n is a tuple with the number of remaining agricultural units to put first and the remaining degraded units second
+    @param transition is the type of transition that was simulated
+    @param step is the number of units that have transitioned
+    @return a new tuple with the updated numbers
+    */
+    def updateRemaining(
+                         n: (Int,Int),
+                         transition: EventType,
+                         step: Int
+                       ):
+    (Int,Int) =
+      transition match
+        case EventType.Conversion => val upd_n_deg = n._2
+          if n._1>0 then {
+            val upd_n_agr = n._1 - step
+            (upd_n_agr,upd_n_deg)
           }
+          else {
+            val upd_n_agr = n._1
+            (upd_n_agr,upd_n_deg)
+          }
+        case EventType.Degradation => val upd_n_agr = n._1
+          if n._2>0 then {
+            val upd_n_deg = n._2 - step
+            (upd_n_agr,upd_n_deg)
+          }
+          else {
+            val upd_n_deg = n._1
+            (upd_n_agr, upd_n_deg)
+          }
+      
 
-      val n_agr: Int = eco.size * fagr.toInt
-      val n_deg: Int = eco.size * fdeg.toInt
-      rec(eco, pln, mng, n_agr, n_deg)
+    @tailrec
+    def rec(
+             eco: EcoLandscape,
+             pln: PlnLandscape,
+             mng: MngLandscape,
+             n_agr: Int,
+             n_deg: Int
+           ):
+    EcoLandscape =
+      val n: Int = n_agr + n_deg
+      if n==0 then eco
+      else {
+        rnd.nextInt(n) match 
+          case n_rnd if n_rnd<n_agr =>  // Conversion transition is chosen
+            val old_agr: Int = eco.countAgricultural
+            val upd_eco: EcoLandscape = initializeAgriculturalUnit(eco, pln, mng)
+            val new_agr: Int = upd_eco.countAgricultural
+            val step: Int = new_agr - old_agr
+            val n_remaining: (Int,Int) = updateRemaining((n_agr,n_deg),EventType.Conversion,step)
+            rec(upd_eco, pln, mng, n_remaining._1, n_remaining._2)
+
+          case n_rnd if n_rnd<n_deg =>  // Degradation transition is chosen
+            val upd_eco = initializeDegradedUnit(eco)
+            val n_remaining: (Int,Int) = updateRemaining((n_agr,n_deg),EventType.Degradation,1)
+            rec(upd_eco, pln, mng, n_remaining._1, n_remaining._2)
+      }
+      
+
+    val n_agr: Int = eco.size * f_agr.toInt
+    val n_deg: Int = eco.size * f_deg.toInt
+    rec(eco, pln, mng, n_agr, n_deg)
           
 end EcoLandscape

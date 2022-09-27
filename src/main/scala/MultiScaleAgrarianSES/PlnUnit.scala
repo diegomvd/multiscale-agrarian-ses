@@ -17,7 +17,7 @@ import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
  * @author diego
  * @todo determine whether the adjacent function still makes sense.
 */
-case class PlnUnit(composition: ParVector[VertexId]):
+case class PlnUnit(composition: Vector[Long]):
   /**
    * Selects all the PlnUnits adjacent to this PlnUnit.
    * @param r the radius of the EcoLandscape at the base of the PlnLandscape containing this PlnUnit.

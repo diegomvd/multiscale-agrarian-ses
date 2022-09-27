@@ -7,7 +7,11 @@ their land cover.
 @todo write the expression of the production in low-intensity EcoUnits.
 */
 
-case class EcoUnit(id: Long, cover: LandCover):
+case class EcoUnit(
+                    id: Long,
+                    cover: LandCover
+                  )
+  extends LandscapeUnit:
   /**
    * @param c is the land cover to match against this EcoUnit's cover
    * @return true if there's a match, false if there's not

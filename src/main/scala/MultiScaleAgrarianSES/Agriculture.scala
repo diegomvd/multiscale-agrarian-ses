@@ -14,7 +14,10 @@ trait Agriculture:
   */
   val yes: Double
   val his: Double
-  def resourceProduction(es_graph: Graph[(EcoUnit,Double), UnDiEdge]): Double =
+  def resourceProduction(
+                          es_graph: Graph[(EcoUnit,Double), UnDiEdge]
+                        ):
+  Double =
     Agriculture.calculateProduction(es_graph,yes,his)
 
 object Agriculture:
@@ -25,35 +28,42 @@ object Agriculture:
   @return the total amount of resources produced in the low-intensity units
   */
   def lowIntResources(
-    es_graph: Graph[(EcoUnit,Double), UnDiEdge],
-    yes: Double,
-    his: Double):
+                       es_graph: Graph[(EcoUnit,Double), UnDiEdge],
+                       yes: Double,
+                       his: Double
+                     ):
   Double =
-    // this function creates a subgraph and then traverses it, another option would be
-    // to traverse the whole graph and match at each node against the cover to calculate production
-    // i am not sure what is the optimal. Creating a subgraph seems expensive, but at the
-    // same time the subgraph function might be optimized within spark
-    val low_intensity : Graph[(EcoUnit,Double),UnDiEdge] = es_graph.subgraph( vpred = (_,attr) => attr._1.cover == LandCover.LowIntensity )
-    low_intensity.vertices.mapValues{ case (_, es) => EcoUnit.lowIntResEquation(yes,his,es) }.reduce( (v1,v2) => (0L, v1._2 + v2._2) )._2
+    // traverses the set of nodes and sums contribution when the EcoUnit is of LowIntensity type
+    es_graph.nodes.foldLeft[Double](0.0){
+      (production, n) =>
+        if n.toOuter._1.matchCover(LandCover.LowIntensity)
+        then production + EcoUnit.lowIntResEquation(yes,his,n.toOuter._2)
+        else production
+    }
 
   /**
   @return the total amount of resources produced in the high-intensity units
   */
-  def highIntResources(es_graph: Graph[(EcoUnit,Double), UnDiEdge]): Double =
-    // this functions follows the same approach as the low intensity one. However,
-    // due to non-dimensionalization in this model the total high intensity production
-    // is just the number of high-intensity units, maybe it is better to just do that
-    // trade off between clarity of code and execution time
-    val high_intensity = es_graph.subgraph(vpred = (_,attr) => attr._1.cover == LandCover.HighIntensity )
-    high_intensity.vertices.mapValues{ case (_,_) => EcoUnit.highIntResEquation() }.reduce( (v1,v2) => (0L, v1._2 + v2._2) )._2
+  def highIntResources(
+                        es_graph: Graph[(EcoUnit,Double), UnDiEdge]
+                      ):
+  Double =
+    es_graph.nodes.foldLeft[Double](0.0) {
+      (production, n) =>
+        if n.toOuter._1.matchCover(LandCover.HighIntensity)
+        then production + EcoUnit.highIntResEquation()
+        else production
+    }
 
   /**
   @return the total amount of resources produced in the landscape
   */
   def calculateProduction(
-    es_graph: Graph[(EcoUnit,Double), UnDiEdge],
-    yes: Double,
-    his: Double): Double =
+                           es_graph: Graph[(EcoUnit,Double), UnDiEdge],
+                           yes: Double,
+                           his: Double
+                         ):
+  Double =
       lowIntResources(es_graph,yes,his) + highIntResources(es_graph)
 
 end Agriculture

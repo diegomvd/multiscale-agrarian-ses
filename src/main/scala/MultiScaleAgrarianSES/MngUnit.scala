@@ -15,9 +15,10 @@ strategy: land-sparing or land-sharing.
 */
 case class MngUnit(
                     id: Long,
-                    composition: ParVector[Long],
+                    composition: Vector[Long],
                     strategy: MngStrategy
-                  ):
+                  )
+  extends LandscapeUnit:
   /**
   Determines if a MngUnit is available for conversion: at least one PlnUnit within the MngUnit must be available. Serves
   to build the probability of choosing any of the MngUnits of a MngLandscape: only available MngUnits can be chosen.

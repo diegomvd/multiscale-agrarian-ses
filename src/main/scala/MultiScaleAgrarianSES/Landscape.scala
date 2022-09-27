@@ -9,6 +9,8 @@ import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
  *
  * @note the size information is contained in the composition but it comes handy to stock it as a separate field to avoid
  * traversing the graph each time size information is needed. This is not costly because size is just an Int.
+ *
+ * @todo this needs to be entirely revised as it is not clear how to change a node value while maintaining the graph
  */
 trait Landscape[T]:
 
@@ -28,7 +30,7 @@ trait Landscape[T]:
                                            b:T
                                          ):
         Graph[T,UnDiEdge]=
-                composition.map[T,UnDiEdge]{case node if node.value==a=>OuterNode(b)}
+                composition.map[T,UnDiEdge]{case node if node.value==a => OuterNode(b)}
 
         /**
          * Updates the composition of the landscape by changing a collection of units.
@@ -40,9 +42,9 @@ trait Landscape[T]:
          *       with a list before calling, or with a key-value map
          * */
         def updateComposition[T:ClassTag](
-                                           a:ParVector[T],
-                                           b:ParVector[T]
+                                           a:Vector[T],
+                                           b:Vector[T]
                                          ):
         Graph[T,UnDiEdge]=
-                composition.map[T,UnDiEdge]{case node if a.exists(_==node.value)=>b.find()}
+                composition.map[T,UnDiEdge]{case node if a.contains(_==node.value) => b.find(_)}
 
