@@ -30,7 +30,6 @@ trait EcoServices :
 
   /**
    *  @return the set of disconnected natural connected components
-   *  @todo does not seem to be working, this line of code is rather obscure needs correction.
    */
   def naturalConnectedComponents: Map[Long, Graph[(Long,EcoUnit), UnDiEdge]] =
     this.comp.componentTraverser().withSubgraph(n => n.toOuter._2.matchCover(LandCover.Natural)) // Get components of the natural subgraph

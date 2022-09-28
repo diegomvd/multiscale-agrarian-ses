@@ -2,9 +2,9 @@ package MultiScaleAgrarianSES
 
 import scala.collection.immutable.ListMap
 import scala.annotation.tailrec
-import scala.collection.parallel.immutable.ParVector
-import scala.collection.parallel._
 import scala.util.Random as rnd
+import scalax.collection.Graph
+import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
 
 /**
  * Used to extend a Landscape to a BaseLandscape. This trait gives a Landscape the possibility to perform a Voronoi
@@ -15,7 +15,7 @@ import scala.util.Random as rnd
 trait VoronoiTesselation[A] extends SpatialStochasticEvents:
 
   // A landscape extended by a VoronoiTesselation needs a composition graph to perform the tesselation
-  val composition: Graph[A,Long]
+  val composition: Graph[(Long,A),UnDiEdge]
 
   /**
    * Creates a seeded composition graph to start the tesselation. The function preserves graph structure but changes
@@ -23,14 +23,16 @@ trait VoronoiTesselation[A] extends SpatialStochasticEvents:
    * then the Id is set to -1L.
    *
    * @param n_seeds is the number of voronoi seeds to effectuate the tesselation
-   * @param base    is the landscape in which the tesselation is done
    * @return a seeded graph where vertex attribute is VertexId of seeds in the base landscape.
    */
-  def seeded(n_seeds: Int): Graph[VertexId, Long] =
+  def seeded(
+              n_seeds: Int
+            ):
+  Graph[Long, UnDiEdge] =
     val seeds: Seq[(Long, Long)] =
-      rnd.shuffle(0 until this.composition.vertices.count.toInt).take(n_seeds).map { i => (i.toLong, i.toLong) }.toSeq
-    this.composition.mapVertices { (vid, _) =>
-      if seeds.contains(vid) then vid else -1L
+      rnd.shuffle(this.composition.nodes.toOuter).take(n_seeds).map{ case (id,_) => (id, id) }.toSeq
+    this.composition.map { x =>
+      if seeds.contains(x.value then n.toOuter._1 else -1L
     }
 
   /**

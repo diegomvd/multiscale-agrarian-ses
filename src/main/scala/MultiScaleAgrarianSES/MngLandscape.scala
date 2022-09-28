@@ -1,7 +1,6 @@
 package MultiScaleAgrarianSES
 
 import scala.collection.immutable.ListMap
-import scala.collection.parallel.immutable.ParVector
 import scala.util.Random as rnd
 import scala.reflect._
 import scalax.collection.Graph
@@ -55,9 +54,9 @@ object MngLandscape :
            ):
   MngLandscape =
     val nm = TopLandscape.numberOfUnits(scale,pln.size)
-    val tess_graph: Graph[ParVector[Long],UnDiEdge] = pln.tesselate(nm)
+    val tess_graph: Graph[Vector[Long],UnDiEdge] = pln.tesselate(nm)
     val n_sparing = fs * nm
-    val sparing_ids: List[ParVector[Long]] = rnd.shuffle(tess_graph.nodes.toOuter.toList).take( (fs * n_sparing).toInt )
+    val sparing_ids: List[Vector[Long]] = rnd.shuffle(tess_graph.nodes.toOuter.toList).take( (fs * n_sparing).toInt )
     val comp = tess_graph.zipWithIndex.map{ (x,id) =>
       //TODO: idk how map functions i.e. how to preserve edges and change node values
       if sparing_ids.contains(x.value)

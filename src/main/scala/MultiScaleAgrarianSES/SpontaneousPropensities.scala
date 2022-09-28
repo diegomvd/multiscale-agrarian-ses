@@ -54,7 +54,7 @@ object SpontaneousPropensities:
    * Calculates the propensity of each EcoUnit in the EcoLandscape associated with one certain event.
    *
    * @param i_val is the initial value for the cumulative sum
-   * @param es    is the ecoServices map
+   * @param es_map    is the ecoServices map
    * @param s     is this transition's sensitivity with es flow
    * @param c     is the land cover type required for this transition
    * @param f     is the function to calculate the propensity of this transition
@@ -73,7 +73,7 @@ object SpontaneousPropensities:
     }.scanLeft( (es_map.head._1, i_val) ){ 
       (pre, now) => ( now._1, f(s,now._2) + pre._2 ) 
     }.to(ListMap)
-  
+
 end SpontaneousPropensities
     
 
