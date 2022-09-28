@@ -2,10 +2,10 @@ package MultiScaleAgrarianSES
 
 import scala.math.pow
 import scala.math.max
-import scala.collection.parallel.immutable.ParVector
 import scala.util.Random as rnd
 import scalax.collection.Graph
 import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
+import scalax.collection.GraphTraversal._
 
 /**
 Implementation of the Planning Landscape. A PlnLandscape is on the top of an EcoLandscape and at the base of a
@@ -17,7 +17,7 @@ MngLandscape. It is composed by a collection of PlnUnits.
       EcoLandscape is functional connectivity rather than adjacency
 */
 case class PlnLandscape(
-                         composition: Graph[(Long,MngUnit),UnDiEdge],
+                         composition: Graph[(Long,PlnUnit),UnDiEdge],
                          scale: Double,
                          size: Int
                        )
@@ -32,10 +32,10 @@ case class PlnLandscape(
      * @return a VertexRDD with the number of available neighbors.
     */
     def availableNeighbors(
-                            mng_unit: ParVector[Long],
+                            mng_unit: Vector[Long],
                             eco: Graph[(Long,EcoUnit),UnDiEdge]
                           ):
-    List[Int] =
+    Map[(Long, PlnUnit), Int] =
       PlnLandscape.neighborAvailability(this.subLandscape(mng_unit),eco,true)
 
     /**
@@ -47,10 +47,10 @@ case class PlnLandscape(
      * @return a VertexRDD with the number of available neighbors.
      */
     def unavailableNeighbors(
-                              mng_unit: ParVector[Long],
+                              mng_unit: Vector[Long],
                               eco: Graph[(Long, EcoUnit), UnDiEdge]
                             ):
-    List[Int] =
+    Map[(Long,PlnUnit),Int] =
       PlnLandscape.neighborAvailability(this.subLandscape(mng_unit),eco,false)
 
     /**
@@ -60,10 +60,10 @@ case class PlnLandscape(
      * @return a sub graph of this PlnLandscape's composition.
     */
     def subLandscape(
-                      mng_unit: ParVector[Long]
+                      mng_unit: Vector[Long]
                     ):
     Graph[(Long,PlnUnit),UnDiEdge] =
-      this.composition.filter( x => mng_unit.exists(_ == x.value) )
+      this.composition.filter( x => mng_unit.contains(x.value) )
 
 object PlnLandscape :
   /**
@@ -106,25 +106,17 @@ object PlnLandscape :
    * @todo must check if there is need to send 0 when dstAttr is not available
   */
   def neighborAvailability(
-                            comp: Graph[(Long,PlnUnit),UnDiEdge],
-                            eco: Graph[(Long,EcoUnit),UnDiEdge],
+                            comp: Graph[(Long,PlnUnit), UnDiEdge],
+                            eco: Graph[(Long,EcoUnit), UnDiEdge],
                             available: Boolean
                           ):
-  List[Int] =
-
-    def valueTuple(b: Boolean) = if b then (1, 0) else (0, 1)
-    val v = valueTuple(available)
-
-    comp.aggregateMessages[Int](
-      triplet => {
-        if (triplet.dstAttr.isAvailable(eco)){
-          if (triplet.srcAttr.isAvailable(eco)) {
-            triplet.sendToDst(v._1)
-          }
-          else triplet.sendToDst(v._2)
-        }
-      },
-      (a,b) => a + b
-    )
+  Map[(Long,PlnUnit), Int] =
+  
+    val iNode = comp.nodes.head
+    (comp get iNode).innerNodeTraverser.withKind(DepthFirst).collect{
+      case n if n.toOuter._2.isAvailable(eco) =>
+        if available then (n.toOuter, n.neighbors.count( _.toOuter._2.isAvailable(eco) ))
+        else (n.toOuter, n.neighbors.count( !_.toOuter._2.isAvailable(eco) ))
+    }.toMap
 
 end PlnLandscape

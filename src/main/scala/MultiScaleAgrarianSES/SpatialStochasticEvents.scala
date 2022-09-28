@@ -1,7 +1,5 @@
 package MultiScaleAgrarianSES
 
-import scalax.collection.Graph
-import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
 import scala.collection.immutable.ListMap
 
 /**
@@ -21,20 +19,29 @@ trait SpatialStochasticEvents:
    * */
   def selectUnit(
                   x_rnd: Double,
-                  prob: ListMap[LandscapeUnit,Double]
+                  prob: ListMap[(Long,LandscapeUnit),Double]
                 ):
   LandscapeUnit =
     prob.find( x_rnd <= _._2 ) match
-      case None => 0L //TODO: I should warn that None should not happen
-      case Some(u,_) => u
+      case None => new LandscapeUnit{}
+      case Some(((_,u),_)) => u
 
   def selectId(
                 x_rnd: Double,
-                prob: ListMap[LandscapeUnit, Double]
+                prob: ListMap[(Long,LandscapeUnit), Double]
               ):
   Long =
     prob.find(x_rnd <= _._2) match
-      case None => 0L //TODO: I should warn that None should not happen
-      case Some(u, _) => u.id
+      case None => 0L
+      case Some(((id,_),_)) => id
+
+  def selectUnitAndId(
+                       x_rnd: Double,
+                       prob: ListMap[(Long, LandscapeUnit), Double]
+                     ):
+  (Long, LandscapeUnit) =
+    prob.find(x_rnd <= _._2) match
+      case None => (0L, new LandscapeUnit{}) 
+      case Some((k, _)) => k
 
 

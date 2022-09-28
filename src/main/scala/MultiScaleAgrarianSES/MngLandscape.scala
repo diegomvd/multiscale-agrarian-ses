@@ -16,10 +16,10 @@ the number of Management Units f the Management Landscape that apply a land-spar
 @author diego
 */
 case class MngLandscape(
-  composition: Graph[(Long,MngUnit),UnDiEdge],
-  scale: Double,
-  n_sparing: Int,
-  size: Int)
+                         composition: Graph[(Long,MngUnit),UnDiEdge],
+                         scale: Double,
+                         n_sparing: Int,
+                         size: Int)
   extends TopLandscape[MngUnit] with SpatialStochasticEvents:
   /**
    * Calculates the propensity of choosing each MngUnit for agricultural expansion.
@@ -28,12 +28,13 @@ case class MngLandscape(
    * @return a ListMap containing cumulative propensity for choosing each management unit
   */
   def propensityOfMngUnits(
-    i_val: Double,
-    tcp: Double,
-    pln: Graph[(Long,PlnUnit),UnDiEdge],
-    eco: Graph[(Long,EcoUnit),UnDiEdge]):
-  ListMap[MngUnit,Double] =
-    val propensities: Map[MngUnit,Double] = MngLandscape.probabilities(this.composition,pln,eco)
+                            i_val: Double,
+                            tcp: Double,
+                            pln: Graph[(Long,PlnUnit),UnDiEdge],
+                            eco: Graph[(Long,EcoUnit),UnDiEdge]
+                          ):
+  ListMap[(Long,MngUnit),Double] =
+    val propensities: Map[(Long,MngUnit),Double] = MngLandscape.probabilities(this.composition,pln,eco)
     propensities.scanLeft((propensities.head._1, i_val))( (pre, now) => (now._1, now._2 + pre._2)).to(ListMap)
 
 object MngLandscape :
@@ -48,9 +49,10 @@ object MngLandscape :
    * @todo need to check this function depending on tesselation
    */
   def apply(
-    scale: Double,
-    pln: PlnLandscape,
-    fs: Double):
+             scale: Double,
+             pln: PlnLandscape,
+             fs: Double
+           ):
   MngLandscape =
     val nm = TopLandscape.numberOfUnits(scale,pln.size)
     val tess_graph: Graph[ParVector[Long],UnDiEdge] = pln.tesselate(nm)
@@ -73,11 +75,12 @@ object MngLandscape :
    * @note At the current modeling stage MngUnits are selected with uniform probability
   */
   def probabilities(
-    mng: Graph[(Long,MngUnit), UnDiEdge],
-    pln: Graph[(Long,PlnUnit), UnDiEdge],
-    eco: Graph[(Long,EcoUnit), UnDiEdge]):
-  Map[MngUnit,Double] =
+                     mng: Graph[(Long,MngUnit), UnDiEdge],
+                     pln: Graph[(Long,PlnUnit), UnDiEdge],
+                     eco: Graph[(Long,EcoUnit), UnDiEdge]
+                   ):
+  Map[(Long,MngUnit),Double] =
     val available_units = mng.nodes.toOuter.filter( _._2.isAvailable(pln,eco) )
-    available_units.map( tuple => (tuple._2, 1.0/available_units.size) ).toMap
+    available_units.map( (_, 1.0/available_units.size) ).toMap
 
 end MngLandscape

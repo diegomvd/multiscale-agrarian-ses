@@ -31,8 +31,11 @@ case class MngUnit(
                    eco: Graph[(Long,EcoUnit),UnDiEdge]
                  ):
   Boolean =
-    // searches for an planing unit within this management unit that is available considering the ecological landscape
-    this.composition.exists{ pln_id => pln.nodes.toOuter.find( _._1 == pln_id )._2.isAvailable(eco) }
+    this.composition.exists {
+      id => pln.nodes.toOuter.collectFirst(
+        { case x if x._1 == id => x._2.isAvailable(eco) }
+      ).contains(true)
+    }
 
   /**
   Calculates the conversion propensity for each of the PlnUnits belonging to this MngUnit given this MngUnit's conversion
@@ -49,14 +52,21 @@ case class MngUnit(
                             pln: PlnLandscape,
                             eco: Graph[(Long,EcoUnit),UnDiEdge]
                           ):
-  ListMap[PlnUnit,Double] =
-    // this step is to calculate the individual propensities, sort them by vertexId and store in a ListMap
-    val prop: ListMap[VertexId,Double] =
+  ListMap[(Long,PlnUnit),Double] =
+    // Calculate the individual propensities, sort them by id and store them in a ListMap
+    val prop: ListMap[(Long,PlnUnit),Double] =
       ListMap(
-        MngUnit.weights(this.composition,pln,eco,this.strategy).mapValues(_ * utcp).collect.toSeq.sortWith(_._1 < _._1):_*
+        MngUnit.weights(this.composition,pln,eco,this.strategy)
+          .map{
+            case ((id,u),prop) => ( (id,u), prop * u_tcp)
+          }
+          .toSeq.sortWith(_._1._1 < _._1._1):_*
       )
-    // this step effectuates the cumulative sum starting with the initial value and yields the cumulative propensities scaled to the rest of the world's propensities
-    prop.scanLeft[(VertexId,Double)]((-1L,ival))((pre, curr) => (curr._1, curr._2 + pre._2)).to(ListMap)
+    // Cumulative sum starting with the initial value and yielding the cumulative propensities scaled to the rest of the world's propensities
+    
+    prop.scanLeft[((Long,PlnUnit),Double)]((prop.head._1,i_val)){
+      (pre, now) => (now._1, now._2 + pre._2)
+    }.to(ListMap)
 
 object MngUnit :
   /**
@@ -67,29 +77,39 @@ object MngUnit :
   @return a VertexRDD with the relative conversion probability associated to each PlnUnit of this MngUnit
   */
   def weights(
-               comp: ParVector[Long],
+               comp: Vector[Long],
                pln: PlnLandscape,
                eco: Graph[(Long,EcoUnit),UnDiEdge],
                stg: MngStrategy
              ):
-  Map[PlnUnit,Double] =
+  Map[(Long,PlnUnit),Double] =
 
-    def normalize(v: Map[PlnUnit,Double]): Map[PlnUnit,Double] =
+    def normalize(
+                   v: Map[(Long,PlnUnit),Double]
+                 ):
+    Map[(Long,PlnUnit),Double] =
       // normalization step
       // normally w should be strictly positive since this calculation would be never
       // done in an unavailable unit, this is being extra cautious and can be helpful for debugging
-      val v_tot: Double = v.reduceLeft( (sum, map) => sum + map._2)
-      if v_tot > 0.0 then v.map(_ / v_tot) else v
+      val v_tot: Double = v.foldLeft(0.0)( (sum, map) => sum + map._2)
+      if v_tot > 0.0 then v.map{ case ((id,unit),p) => ((id,unit),p/v_tot) } else v
 
     // land-sparing units prefer to segregate new conversions from natural land
     // thus weighting more available units close to unavailable ones
     // land-sharing units prefer to integrate new conversions with natural land
     // thus weighting more available units close to available ones
-    stg match {
+    stg match
       case MngStrategy.LandSparing =>
-        normalize( pln.unavailableNeighbors(comp,eco).mapValues(PlnUnit.weightExpression(_, MngStrategy.LandSparing.clustering)) )
+        normalize( pln.unavailableNeighbors(comp,eco)
+          .map{
+            case ((id,unit),nn) => ((id,unit), PlnUnit.weightExpression(nn, MngStrategy.LandSparing.clustering))
+          }
+        )
       case MngStrategy.LandSharing =>
-        normalize( pln.availableNeighbors(comp,eco).mapValues(PlnUnit.weightExpression(_, MngStrategy.LandSharing.clustering)) )
-    }
+        normalize( pln.availableNeighbors(comp,eco)
+          .map{
+            case ((id,unit),nn) => ((id, unit), PlnUnit.weightExpression(nn, MngStrategy.LandSharing.clustering))
+          }
+        )
 
 end MngUnit

@@ -45,7 +45,7 @@ object EcoUnit:
   def lowIntResEquation(
     y1: Double,
     y2: Double,
-    es: Double): Double = 0.0 // TODO: fill the function
+    es: Double): Double = 0.0 //TODO: fill the function
 
 
   def highIntResEquation(): Double = 1.0

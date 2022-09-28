@@ -2,8 +2,6 @@ package MultiScaleAgrarianSES
 
 import scala.math.pow
 import scala.math.max
-import scala.collection.parallel.immutable.ParVector
-import scala.util.Random as rnd
 import scalax.collection.Graph
 import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
 
@@ -17,7 +15,11 @@ import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
  * @author diego
  * @todo determine whether the adjacent function still makes sense.
 */
-case class PlnUnit(composition: Vector[Long]):
+case class PlnUnit(
+                    id: Long,
+                    composition: Vector[Long]
+                  )
+extends LandscapeUnit:
   /**
    * Selects all the PlnUnits adjacent to this PlnUnit.
    * @param r the radius of the EcoLandscape at the base of the PlnLandscape containing this PlnUnit.
@@ -32,8 +34,11 @@ case class PlnUnit(composition: Vector[Long]):
    * @param eco the composition of the the EcoLandscape at the base of the PlnLandscape containing this PlnUnit.
    * @return true if available, false if not.
    * */
-  def isAvailable(eco: Graph[EcoUnit,Long]): Boolean =
-    PlnUnit.isAvailable(this.composition,eco)
+  def isAvailable(
+                   eco: Graph[(Long,EcoUnit),UnDiEdge]
+                 ): 
+  Boolean =
+    PlnUnit.isAvailable(this.composition, eco)
 
 object PlnUnit :
 
@@ -56,13 +61,23 @@ object PlnUnit :
   @return true if the planning unit can be cultivated, false if not
   */
   def isAvailable(
-    comp: ParVector[VertexId],
-    eco: Graph[EcoUnit,Long]):
+                   comp: Vector[Long],
+                   eco: Graph[(Long,EcoUnit),UnDiEdge]
+                 ):
   Boolean =
-    comp.forall(eco.vertices.lookup(_).head.matchCover(LandCover.Natural)) // all EcoUnits Natural
-    //val predicate1 = comp.exists( eco.vertices.lookup(_).matchCover(LandCover.Natural)) // at least one natural unit
-    //val predicate2 = comp.forall{ eco.vertices.lookup(_).matchCover(LandCover.Natural) || eco.vertices.lookup(_).matchCover(LandCover.Degraded) } // no cultivated units
-    //predicate1 && predicate2
+    // get all the eco units inside this planning unit
+    val plnU = eco.nodes.toOuter.filter {
+      case (id, _) => comp.contains(id)
+    }
+    // check if there is at least one natural unit that can be converted
+    val predicate1 = plnU.exists{
+      case (_,u) => u.matchCover(LandCover.Natural) 
+    }
+    // now check that there are not agricultural units
+    val predicate2 = plnU.exists{
+      case (_,u) => u.matchCover(LandCover.LowIntensity) || u.matchCover(LandCover.HighIntensity)
+    }
+    predicate1 && !predicate2
 
   /**
   @param nn is the number of neighbors that give weight to the clustering
@@ -70,9 +85,10 @@ object PlnUnit :
   @return the clustering weight
   */
   def weightExpression(
-    nn: Int,
-    clustering: Double):
-    Double =
-      pow( max(0.1,nn), clustering)
+                        nn: Int,
+                        clustering: Double
+                      ):
+  Double =
+    pow( max(0.1,nn), clustering)
 
 end PlnUnit

@@ -223,7 +223,7 @@ object EcoLandscape :
                                 eco: EcoLandscape
                               ):
     EcoLandscape =
-      val propensity: ListMap[EcoUnit,Double] = eco.degradationPropensity(0.0, eco.ecoServices , 1.0)
+      val propensity: ListMap[(Long,EcoUnit),Double] =  SpontaneousPropensities.propensity(0.0, eco.ecoServices, 1.0, LandCover.Natural, EcoUnit.decreasingPES)
       val x_rnd: Double = rnd.between(0.0,propensity.last._2)
       val ecoU = eco.selectUnit(x_rnd,propensity)
       eco.update(ecoU, EcoUnit(ecoU.id, LandCover.Degraded))

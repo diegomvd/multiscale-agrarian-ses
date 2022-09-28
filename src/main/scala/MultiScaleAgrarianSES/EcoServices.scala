@@ -33,7 +33,11 @@ trait EcoServices :
    *  @todo does not seem to be working, this line of code is rather obscure needs correction.
    */
   def naturalConnectedComponents: Map[Long, Graph[(Long,EcoUnit), UnDiEdge]] =
-    this.comp.componentTraverser(subgraphNodes = n => n.toOuter._2.matchCover(LandCover.Natural)).map(_.toGraph).zipWithIndex.map(_.swap).toMap
+    this.comp.componentTraverser().withSubgraph(n => n.toOuter._2.matchCover(LandCover.Natural)) // Get components of the natural subgraph
+      .map(_.to(Graph)) // Cast the components to graphs
+      .zipWithIndex // Associate each component with an index
+      .map(_.swap) // Invert order of indices and graphs
+      .map{case (nccId,g) => (nccId.toLong,g)}.toMap // Convert the index to Long type
 
 object EcoServices :
 
@@ -48,7 +52,7 @@ object EcoServices :
                              ):
   Map[(Long,EcoUnit), Long] =
     ncc.flatMap {
-      case (id, graph) => graph.nodes.toList.map(node => (node, id))
+      case (id, graph) => graph.nodes.toOuter.toList.map(node => (node, id))
     }
 
   /**
@@ -93,13 +97,15 @@ object EcoServices :
                                  comp: Graph[(Long,EcoUnit), UnDiEdge],
                                  out: Map[(Long,EcoUnit), Double]
                                ):
-  Map[EcoUnit, Double] =
-    comp.get(1).innerNodeTraverser.foreach[EcoUnit, Double]{ n => // need to find how to set an initial node for traverse
-      ( n,
-        n.neighbors.foldLeft((0,0.0)){
-          (tuple, neighbor) => (tuple._1 + 1, tuple._2 + out.getOrElse(neighbor,0.0) )
-        }.map(_._2/_._1)
-      )
+  Map[(Long,EcoUnit), Double] =
+    val iNode = comp.nodes.head
+    comp.get(iNode).innerNodeTraverser.map[((Long,EcoUnit), Double)]{
+      n =>
+        val (count,es) =
+          n.neighbors.foldLeft[(Int, Double)]((0, 0.0)) { // (neighbor count, eco services)
+            case ((count, es), neighbor) => (count + 1, es + out.getOrElse(neighbor.toOuter, 0.0))
+          }
+        ( n.toOuter, es/count.toDouble )
     }.toMap
 
 end EcoServices
