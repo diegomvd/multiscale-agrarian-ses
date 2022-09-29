@@ -32,7 +32,8 @@ import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
  *       as argument to a bunch of functions
 */
 case class EcoLandscape(
-                         composition: Graph[(Long,EcoUnit),UnDiEdge],
+                         composition: Map[Long,EcoUnit],
+                         structure: Graph[Long,UnDiEdge], 
                          size: Int,
                          ecr: Int,
                          scal_exp: Double,
@@ -50,7 +51,7 @@ case class EcoLandscape(
      * @return an updated EcoLandscape
      **/
     def update(
-                old_units: Vector[EcoUnit],
+                old_units: Vector[Long],
                 new_units: Vector[EcoUnit]
               ):
     EcoLandscape =
@@ -64,7 +65,7 @@ case class EcoLandscape(
      * @return an updated EcoLandscape
      * */
     def update(
-                old_unit: EcoUnit,
+                old_unit: Long,
                 new_unit: EcoUnit
               ):
     EcoLandscape =
@@ -93,23 +94,30 @@ case class EcoLandscape(
                               ):
     (Vector[Long], Vector[EcoUnit]) =
       // First calculate the conversion propensity in each management unit
-      val mngP: ListMap[MngUnit, Double] = mng.propensityOfMngUnits(i_val, tcp, pln.composition, this.composition)
-      // Then select the management unit
-      val mngU: MngUnit = mng.selectUnit(x_rnd, mngP)
+      val mngP: ListMap[Long, Double] = mng.propensityOfMngUnits(i_val, tcp, pln.composition, this.composition)
 
-      // Get the upper boundary for the propensity of the planning units that belong to the selected management unit
-      val max: Double = mngP.getOrElse(mngU,0.0) // should warn that 0.0 means something went wrong
+      // Then select the management unit: collect Id, the unit and the upper boundary for propensity
+      val ((mngId,mngU),upper): ((Long,MngUnit),Double) =
+        mng.selectUnitAndIdWithPropensity[MngUnit](x_rnd, mngP) match
+          case None => ((-1L,MngUnit()),0.0)
+          case Some(((id,u),p)) => ((id,u),p)
+
+      // General way to get lower bound, inefficient because of ListMap, alternative can be to store the value of precedent member
+      val lower: Double =
+        mngP.find{ case ((id,_),_) => id == mngId-1L} match
+          case None => mngP.head._2
+          case Some(((_,_),p)) => p
 
       // The approach is based on the fact that every management unit has can be selected with equal probability, thus
       // the propensity lower bound for a planning unit within the management unit can be obtained by subtracting the
       // the total propensity of a management unit to the maximum of the selected management unit.
       // TODO: note that if the unit was selected based on id the min can be found by accessing the unit with id - 1!
       val unitP: Double = mngP.head._2
-      val min: Double = max - unitP
+      val lower: Double = upper - unitP
 
       // Calculate the propensities of planning units within the selected management unit
-      val plnP: ListMap[PlnUnit, Double] =
-        mngU.propensityOfPlnUnits(min, unitP, pln, this.composition)
+      val plnP: ListMap[(Long,PlnUnit), Double] =
+        mngU.propensityOfPlnUnits(lower, upper-lower, pln, this.composition)
       // Select a planning unit for conversion
       val plnU: PlnUnit = pln.selectUnit(x_rnd, plnP)
 
