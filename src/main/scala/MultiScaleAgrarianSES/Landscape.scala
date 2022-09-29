@@ -1,50 +1,53 @@
 package MultiScaleAgrarianSES
 
 import scalax.collection.Graph
-import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
+import scalax.collection.GraphPredef.*
+import scalax.collection.GraphEdge.*
 
 /**
  * Base implementation of the landscape trait. At their minimum expression landscapes are characterized by their
- * composition graph and their size.
+ * composition map, their structure graph and their size.
  *
  * @note the size information is contained in the composition but it comes handy to stock it as a separate field to avoid
  * traversing the graph each time size information is needed. This is not costly because size is just an Int.
- *
- * @todo this needs to be entirely revised as it is not clear how to change a node value while maintaining the graph
  */
-trait Landscape[T]:
+trait Landscape:
 
-        val composition:Graph[T,UnDiEdge]
-        val size:Int
+  val composition: Map[Long,LandscapeUnit]
+  val structure: Graph[Long,UnDiEdge]
+  val size:Int
 
-        /**
-         * Updates the composition of the landscape by changing a single unit.
-         *
-         * @param a is the VertexId of the unit to be changed
-         * @param b is the new unit
-         * @return an updated composition
-         * @todo map functioning seems obscure, not sure if this preserves the edge
-         * */
-        def updateComposition[T:ClassTag](
-                                           a:T,
-                                           b:T
-                                         ):
-        Graph[T,UnDiEdge]=
-                composition.map[T,UnDiEdge]{case node if node.value==a => OuterNode(b)}
+  /**
+   * Updates the composition of the landscape by changing a single unit.
+   *
+   * @param a is the Id of the unit to be updated
+   * @param b is the new unit
+   * @return an updated composition
+   * */
+  def updateComposition[A <: LandscapeUnit](
+                                             a:Long,
+                                             b:A
+                                           ):
+  Map[Long,A]=
+    this.composition.map{
+      case (i,_) if i==a => (i,b)
+    }
 
-        /**
-         * Updates the composition of the landscape by changing a collection of units.
-         *
-         * @param a is the collection of units to be changed
-         * @param b is the new unit to replace all others
-         * @return an updated composition
-         * @todo How to preserve units' indexing in this method??!! This needs to be resolved, maybe I should ensure order
-         *       with a list before calling, or with a key-value map
-         * */
-        def updateComposition[T:ClassTag](
-                                           a:Vector[T],
-                                           b:Vector[T]
-                                         ):
-        Graph[T,UnDiEdge]=
-                composition.map[T,UnDiEdge]{case node if a.contains(_==node.value) => b.find(_)}
+  /**
+   * Updates the composition of the landscape by changing a collection of units.
+   *
+   * @param a is the collection of Ids of the units to be changed
+   * @param b is the new unit to replace all others
+   * @return an updated composition
+   * @note finding the corresponding unit can be done with an option pattern and with a map instead of vector
+   * */
+  def updateComposition[A <: LandscapeUnit](
+                                             a:Vector[Long],
+                                             b:Vector[A]
+                                           ):
+  Map[Long,A]=
+    this.composition.map{
+      case (i,_) if a.contains(i) =>
+        (i, b.apply( b.indexWhere(_.id == i)) )
+    }
 

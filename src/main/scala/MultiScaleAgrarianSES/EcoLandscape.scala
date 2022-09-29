@@ -42,7 +42,7 @@ case class EcoLandscape(
                          s_rec: Double,
                          s_deg: Double,
                          s_flo: Double)
-  extends BaseLandscape[EcoUnit] with Agriculture with EcoServices with SpontaneousPropensities with SpatialStochasticEvents :
+  extends BaseLandscape with Agriculture with EcoServices with SpontaneousPropensities with SpatialStochasticEvents :
 
     /**
      * Updates land cover in multiple units following a conversion event.
@@ -95,34 +95,19 @@ case class EcoLandscape(
     (Vector[Long], Vector[EcoUnit]) =
       // First calculate the conversion propensity in each management unit
       val mngP: ListMap[Long, Double] = mng.propensityOfMngUnits(i_val, tcp, pln.composition, this.composition)
-
-      // Then select the management unit: collect Id, the unit and the upper boundary for propensity
-      val ((mngId,mngU),upper): ((Long,MngUnit),Double) =
-        mng.selectUnitAndIdWithPropensity[MngUnit](x_rnd, mngP) match
-          case None => ((-1L,MngUnit()),0.0)
-          case Some(((id,u),p)) => ((id,u),p)
-
-      // General way to get lower bound, inefficient because of ListMap, alternative can be to store the value of precedent member
-      val lower: Double =
-        mngP.find{ case ((id,_),_) => id == mngId-1L} match
-          case None => mngP.head._2
-          case Some(((_,_),p)) => p
-
-      // The approach is based on the fact that every management unit has can be selected with equal probability, thus
-      // the propensity lower bound for a planning unit within the management unit can be obtained by subtracting the
-      // the total propensity of a management unit to the maximum of the selected management unit.
-      // TODO: note that if the unit was selected based on id the min can be found by accessing the unit with id - 1!
-      val unitP: Double = mngP.head._2
-      val lower: Double = upper - unitP
-
+      // Get the Id of the selected unit, and the upper bound for the unit's propensity
+      val (mngId,upperP): (Long,Double) = mng.selectUnitIdWithPropensity(x_rnd,mngP)
+      // Get the lower bound of the unit's propensity: this is not efficient because of ListMap
+      val lowerP: Double = mngP.getOrElse(mngId-1L,mngP.head._2)
+      // Get the management unit at the selected Id
+      val mngU: MngUnit = mng.composition.getOrElse(mngId,MngUnit())
       // Calculate the propensities of planning units within the selected management unit
-      val plnP: ListMap[(Long,PlnUnit), Double] =
-        mngU.propensityOfPlnUnits(lower, upper-lower, pln, this.composition)
+      val plnP: ListMap[Long, Double] =
+        mngU.propensityOfPlnUnits(lowerP, upperP-lowerP, pln, this.composition)
       // Select a planning unit for conversion
-      val plnU: PlnUnit = pln.selectUnit(x_rnd, plnP)
-
+      val plnId: Long  = pln.selectUnitId(x_rnd, plnP)
       // Finally, get the Ids of the ecological units to convert to agriculture from the planning unit composition
-      val ecoIds: Vector[Long] = plnU.composition
+      val ecoIds: Vector[Long] = pln.composition.getOrElse(plnId, PlnUnit()).composition
       mngU.strategy match
         case MngStrategy.LandSharing => (ecoIds, ecoIds.map( EcoUnit(_, LandCover.LowIntensity) ) )
         case MngStrategy.LandSparing => (ecoIds, ecoIds.map( EcoUnit(_, LandCover.HighIntensity) ) )
@@ -137,10 +122,10 @@ case class EcoLandscape(
     EcoLandscape =
       EcoLandscape.initialize(this,pln,mng,f_agr,f_deg)
 
-    def countNatural: Int = this.composition.nodes.toOuter.count{ case (_,u) => u.matchCover(LandCover.Natural) }
-    def countDegraded: Int = this.composition.nodes.toOuter.count{ case (_,u) => u.matchCover(LandCover.Degraded) }
-    def countAgriculturalLo: Int = this.composition.nodes.toOuter.count{ case (_,u) => u.matchCover(LandCover.LowIntensity) }
-    def countAgriculturalHi: Int = this.composition.nodes.toOuter.count{ case (_,u) => u.matchCover(LandCover.HighIntensity) }
+    def countNatural: Int = this.composition.count{ case (_,u) => u.matchCover(LandCover.Natural) }
+    def countDegraded: Int = this.composition.count{ case (_,u) => u.matchCover(LandCover.Degraded) }
+    def countAgriculturalLo: Int = this.composition.count{ case (_,u) => u.matchCover(LandCover.LowIntensity) }
+    def countAgriculturalHi: Int = this.composition.count{ case (_,u) => u.matchCover(LandCover.HighIntensity) }
     def countAgricultural: Int = this.countAgriculturalLo + this.countAgriculturalHi
 
 object EcoLandscape :
@@ -172,9 +157,9 @@ object EcoLandscape :
              s_flo: Double
            ):
   EcoLandscape =
-    val comp = buildComposition(r,ecr)
-    EcoLandscape(comp,ModCo.area(r),ecr,scal_exp,yes,his,s_rec,s_deg,s_flo)
-
+    val comp = buildComposition(r)
+    val struct = buildStructure(comp,ecr)
+    EcoLandscape(comp,struct,ModCo.area(r),ecr,scal_exp,yes,his,s_rec,s_deg,s_flo)
 
   /**
   @param r is the radius of the biophysical landscape
@@ -182,21 +167,24 @@ object EcoLandscape :
   @return the biophysical composition graph with every unit in a natural state
   */
   def buildComposition(
-                        r: Int,
-                        ecr: Int
+                        r: Int
                       ):
-  Graph[(Long,EcoUnit), UnDiEdge] =
-    // First create a list of nodes to feed to the graph constructor
-    val nodes: List[(Long,EcoUnit)] =
-      ModCo.apply(r).map { m => (m.toLong,EcoUnit(m.toLong,LandCover.Natural)) }
-    // Now use the list of nodes to create a list of existing edges based on neighborhood
-    val edges: List[UnDiEdge] =
-      nodes.toSet.subsets(2).collect{
-          case s if ModCo.neighbors(s.head._1,r,ecr).contains(s.last._1) =>
-            UnDiEdge( s.head, s.last )
-        }.toList
-    // instantiate the graph
+  Map[Long,EcoUnit] =
+    ModCo.apply(r).map { m => (m.toLong,EcoUnit(m.toLong,LandCover.Natural)) }.toMap
+
+  def buildStructure(
+                      composition: Map[Long,EcoUnit],
+                      ecr: Int
+                    ):
+  Graph[Long, UnDiEdge] =
+    val nodes: List[Long] = composition.keys.toList
+    val edges = // List[UnDiEdge]
+      nodes.toSet.subsets(2).collect {
+        case s if ModCo.neighbors(s.head.toInt, r, ecr).contains(s.last) =>
+          UnDiEdge(s.head, s.last)
+      }.toList
     Graph.from(nodes,edges)
+
 
   /**
   @param fagr is fraction of agricultural units in the initial biophysical landscape
@@ -231,10 +219,10 @@ object EcoLandscape :
                                 eco: EcoLandscape
                               ):
     EcoLandscape =
-      val propensity: ListMap[(Long,EcoUnit),Double] =  SpontaneousPropensities.propensity(0.0, eco.ecoServices, 1.0, LandCover.Natural, EcoUnit.decreasingPES)
+      val propensity: ListMap[Long,Double] =  SpontaneousPropensities.propensity(0.0, eco.composition, eco.ecoServices, 1.0, LandCover.Natural, EcoUnit.decreasingPES)
       val x_rnd: Double = rnd.between(0.0,propensity.last._2)
-      val ecoU = eco.selectUnit(x_rnd,propensity)
-      eco.update(ecoU, EcoUnit(ecoU.id, LandCover.Degraded))
+      val ecoId = eco.selectUnitId(x_rnd,propensity)
+      eco.update(ecoId, EcoUnit(ecoId, LandCover.Degraded))
 
     /**
     @param n is a tuple with the number of remaining agricultural units to put first and the remaining degraded units second

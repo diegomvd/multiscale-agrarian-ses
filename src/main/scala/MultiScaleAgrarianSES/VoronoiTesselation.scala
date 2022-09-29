@@ -12,10 +12,10 @@ import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
  * homogeneous radial growth process that uses structure from the composition network of the landscape to infer
  * neighborhood between units.
 */
-trait VoronoiTesselation[A] extends SpatialStochasticEvents:
+trait VoronoiTesselation extends SpatialStochasticEvents:
 
-  // A landscape extended by a VoronoiTesselation needs a composition graph to perform the tesselation
-  val composition: Graph[(Long,A),UnDiEdge]
+  val composition: Map[Long,LandscapeUnit]
+  val structure: Graph[Long,UnDiEdge]
 
   /**
    * Creates a seeded composition graph to start the tesselation. The function preserves graph structure but changes
@@ -28,30 +28,30 @@ trait VoronoiTesselation[A] extends SpatialStochasticEvents:
   def seeded(
               n_seeds: Int
             ):
-  Graph[Long, UnDiEdge] =
-    val seeds: Seq[(Long, Long)] =
-      rnd.shuffle(this.composition.nodes.toOuter).take(n_seeds).map{ case (id,_) => (id, id) }.toSeq
-    this.composition.map { x =>
-      if seeds.contains(x.value then n.toOuter._1 else -1L
+  Map[Long, Long] = //the id of the base unit, the polygon id
+    val seeds: Seq[Long] =
+      rnd.shuffle(this.composition.keys).take(n_seeds).toSeq
+    this.composition.map {
+      case (id,_) => if seeds.contains(id) then (id,id) else (id,-1L)
     }
 
   /**
    * Calculates the edges of the new composition graph emerging from the tesselation.
    *
-   * @param vertices RDD of the vertices Ids and their attribute: a collection of vertices ids from the base composition
+   * @param nodes RDD of the vertices Ids and their attribute: a collection of vertices ids from the base composition
    *                 graph.
    * @return an RDD of the edges of the nez landscape. */
-  def newEdges(vertices: RDD[(VertexId, ParVector[VertexId])]): RDD[Edge[Long]] =
-    val nids = this.composition.collectNeighborIds(EdgeDirection.Both)
-
-    // this gets an RDD with all the combinations of 2
-    vertices.cartesian(vertices).filter { case (a, b) =>
-      // this removes duplicates and combination of same vids
-      (a._1 < b._1) || (a._1 == b._1)
-      // now I should check if it exists a vid in iterable a that has as neighbor any vid in iterable b
-    }.collect {
-      case (a, b) if a._2.exists(vid1 => nids.lookup(vid1).head.exists(vid2 => b._2.exists(_ == vid2))) => Edge(a._1, b._1, 0L)
-    }
+  def newEdges(
+                nodes: Map[Long, Vector[Long]]
+              ):
+  List[UnDiEdge] =
+    nodes.toSet.subsets(2).collect{
+      case s if s.head._2.exists{
+        id => (this.structure get id).neighbors.exists{
+          n => s.last._2.contains(n.toOuter)
+        }
+      } => UnDiEdge(s.head._1, s.last._1)
+    }.toList
 
   /**
    * Performs a Voronoi tesselation over the composition graph given the number of Voronoi polygons to create.
@@ -60,28 +60,34 @@ trait VoronoiTesselation[A] extends SpatialStochasticEvents:
    * @return a new composition graph where the vertex are collections of the units of the original composition graph's
    *         VertexIds.
    * */
-  def tesselate(n_seeds: Int): Graph[ParVector[VertexId], Long] =
+  def tesselate(
+                 n_seeds: Int
+               ):
+  (Map[Long, Vector[Long]], Graph[Long, UnDiEdge]) =
 
     @tailrec
-    def rec(assigned: Graph[VertexId, Long]): Graph[VertexId, Long] =
-      val remaining: Int = assigned.vertices.filter(_._2 == -1L).count.toInt
+    def rec(
+             assigned: Map[Long, Long]
+           ):
+    Map[Long, Long] =
+      val remaining: Int = assigned.count(_._2 == -1L)
 
-      if remaining >= 0.0 then assigned
+      if remaining <= 0.0 then assigned
       else{
-        val cum_prob = VoronoiTesselation.cumulativeProbabilities( VoronoiTesselation.probabilityGraph( assigned, VoronoiTesselation.probabilities(assigned) ) )
+        val cum_prob = VoronoiTesselation.cumulativeProbabilities(assigned, this.structure)
         val x_rnd: Double = rnd.between(0.0, cum_prob.last._2)
-        val pos = selectVId( x_rnd, cum_prob )
-        val pol = VoronoiTesselation.selectGrowingPolygon( pos, assigned )
+        val pos = selectUnitId( x_rnd, cum_prob )
+        val pol = VoronoiTesselation.selectGrowingPolygon( pos, assigned, this.structure )
 
-        val new_graph = assigned.mapVertices{ case (vid,_) if vid == pos => pol }
+        val new_graph = assigned.map{ case (id,_) if id == pos => (id,pol) }
         rec(new_graph)
       }
 
-    val assigned = this.seeded(n_seeds)
-    val assigned_graph: Graph[VertexId, Long] = rec(assigned)
-    val vertices: RDD[(VertexId, ParVector[VertexId])] = VoronoiTesselation.groupByPolygon(assigned_graph)
-    val edges: RDD[Edge[Long]] = this.newEdges(vertices)
-    Graph(vertices,edges)
+    val seeded = this.seeded(n_seeds)
+    val assigned: Map[Long, Long] = rec(seeded)
+    val nodes: Map[Long, Vector[Long]] = VoronoiTesselation.groupByPolygon(assigned)
+    val edges/*: List[UnDiEdge]*/ = this.newEdges(nodes)
+    (nodes,Graph.from(nodes.keys,edges))
 
 object VoronoiTesselation:
 
@@ -90,55 +96,21 @@ object VoronoiTesselation:
    * @param assigned the graph over which the radial grozth process is being simulated.
    * @return a VertexRDD containing the expansion probabilities in each vertex of the graph.
    * */
-  def probabilities(assigned: Graph[VertexId, Long]): VertexRDD[Double] =
-
-    assigned.aggregateMessages[(Double,Double)](
-      triplet => {
-        if (triplet.dstAttr != -1L) {
-          // if the vertex is already assigned then probability of choosing that vertex is 0
-          triplet.sendToDst((1.0,0.0))
-        }
-        else {
-          triplet.srcAttr match{
-            // if the source is not assigned then the destination cannot be colonized
-            case -1L => triplet.sendToDst((1.0,0.0))
-            case _ => triplet.sendToDst((1.0,1.0))
-          }
-        }
-      },
-      (a,b) => (a._1 + b._1, a._2 + b._2)
-    ).mapValues( (_,value) => value._2/value._1 )
-
-  /**
-   * Joins the graph supporting the radial growth process with the expansion probability in each vertex.
-   * @param assigned the graph supporting the tesselation process.
-   * @param prob the expansion probabilities in each vertex of the supporting graph.
-   * @return A new graph with the probability as added vertex attribute.
-   * */
-  def probabilityGraph(
-    assigned: Graph[VertexId, Long],
-    prob: VertexRDD[Double]):
-  Graph[(VertexId,Double), Long] =
-    assigned.outerJoinVertices(prob){ (_,vid2,prob_opt)=>
-      prob_opt match {
-        case Some(prob_opt) => (vid2, prob_opt)
-        case None => (vid2, 0.0)
+  def cumulativeProbabilities(
+                               assigned: Map[Long, Long],
+                               structure: Graph[Long, UnDiEdge]
+                             ):
+  ListMap[Long,Double] =
+    ListMap(
+      assigned.map{
+        case (id,poly) if poly != -1L => // If the polygon is not colonized yet
+          val neighbors = (structure get id).neighbors
+          (id,neighbors.count(n => n.toOuter != -1L).toDouble/neighbors.size.toDouble) // Count the number of colonized neighbors
       }
-    }
+        .toSeq.sortWith(_._2>_._2):_* // sorting from largest probability to smallest to speed up selection in average
+    )
+      .scanLeft((new Long(),0.0))( (pre,now) => (now._1, pre._2 + now._2)).to(ListMap)
 
-  /**
-   * Calculates the cumulative probabilities of expansion given the probability graph.
-   * @param p_graph the joined probability graph
-   * @return a ListMap with the cumulative propensity of expansion in each vertex.
-   * @todo Check if in mapValues t is necessary to pass also the vid, guess not
-  */
-  def cumulativeProbabilities(p_graph: Graph[(VertexId,Double), Long]):
-  ListMap[VertexId,Double] =
-    // pick only the part of the subgraph with a non-null probability of being selected
-    val sg: Graph[(VertexId,Double),Long] = p_graph.subgraph(vpred = (_,vd) => vd._2 > 0.0)
-    val prob_map: ListMap[VertexId,Double] = ListMap(
-      sg.vertices.collect.toSeq.sortWith( (_,data) => data._1 < data._1):_*)
-    prob_map.scanLeft[(VertexId,Double)]((-1L,0.0))( (pre, curr) => (curr._1, curr._2 + pre._2) ).to(ListMap)
 
   /**
    * Groups VertexIds of the base composition according to the Id of the Voronoi polygon they belong to.
@@ -146,19 +118,14 @@ object VoronoiTesselation:
    * @return an RDD of tuples with the information on the VertexId of the Voronoi polygon and the collection of VertexIds
    *         of base landscape's vertices belonging to the polygon.
    * */
-  def groupByPolygon(dispersed: Graph[VertexId, Long]):
-  RDD[(VertexId, ParVector[VertexId])] =
-    // The first vertexId is the PolygonId
-    // The second vertexId is the base unit Id
-    // The third vertexId is also the PolygonId
-    val grouped: RDD[( VertexId, Iterable[(VertexId, VertexId)] )] =
-      dispersed.vertices.groupBy{
-        (_,vidPolygon) => vidPolygon
-      }
-    // We only want to recover the sequence of base unit Ids and polygon Id
-    grouped.mapValues {
-      v => v.map( (vid, _ ) => vid ).to(ParVector)
+  def groupByPolygon(
+                      dispersed: Map[Long, Long]
+                    ):
+  Map[Long, Vector[Long]] =
+    dispersed.toVector.groupBy(_._2).map{
+        case (k,v) => (k,v.map(_._1))
     }
+
 
   /**
    * Determines the Voronoi polygon that expands at a given time step to a given vertex. Useful in case of competing
@@ -169,9 +136,15 @@ object VoronoiTesselation:
    * @return the id of the expanding polygon.
    * */
   def selectGrowingPolygon(
-    vid: VertexId,
-    assigned: Graph[VertexId, Long]):
-  VertexId =
-      rnd.shuffle(assigned.collectNeighborIds(EdgeDirection.Both).lookup(vid).head).take(1).head
+                            id: Long,
+                            comp: Map[Long, Long],
+                            struct: Graph[Long,UnDiEdge]
+                          ):
+  Long =
+      rnd.shuffle(
+        (struct get id).neighbors.filter(
+          n => comp.getOrElse(n.toOuter,-1L) != -1L
+        )
+      ).take(1).head.toOuter
 
 end VoronoiTesselation

@@ -11,6 +11,7 @@ trait SpontaneousPropensities:
   val s_rec:Double
   val s_deg:Double
   val s_flo:Double
+  val composition: Map[Long,EcoUnit]
 
   /**
    * Calculates the cumulative sum of the spontaneous propensities for each type of event in each unit of the EcoLandscape.
@@ -21,13 +22,13 @@ trait SpontaneousPropensities:
    */
   def spontaneousPropensities(
                                i_val: Double,
-                               es_map: Map[(Long,EcoUnit), Double]
+                               es_map: Map[Long,Double]
                              ):
-  ((ListMap[(Long,EcoUnit), Double], ListMap[(Long,EcoUnit), Double], ListMap[(Long,EcoUnit), Double], ListMap[(Long,EcoUnit), Double]), Double) =
-    val recovery: ListMap[(Long,EcoUnit), Double] = SpontaneousPropensities.propensity(i_val, es_map, this.s_rec, LandCover.Degraded, EcoUnit.increasingPES)
-    val degradation: ListMap[(Long,EcoUnit), Double] = SpontaneousPropensities.propensity(recovery.last._2, es_map, this.s_deg, LandCover.Natural, EcoUnit.decreasingPES)
-    val lo_floss: ListMap[(Long,EcoUnit), Double] = SpontaneousPropensities.propensity(degradation.last._2, es_map, this.s_flo, LandCover.LowIntensity, EcoUnit.decreasingPES)
-    val hi_floss: ListMap[(Long,EcoUnit), Double] = SpontaneousPropensities.propensity(lo_floss.last._2, es_map, this.s_flo, LandCover.HighIntensity, EcoUnit.decreasingPES)
+  ((ListMap[Long, Double], ListMap[Long, Double], ListMap[Long, Double], ListMap[Long, Double]), Double) =
+    val recovery: ListMap[Long, Double] = SpontaneousPropensities.propensity(i_val, this.composition, es_map, this.s_rec, LandCover.Degraded, EcoUnit.increasingPES)
+    val degradation: ListMap[Long, Double] = SpontaneousPropensities.propensity(recovery.last._2, this.composition, es_map, this.s_deg, LandCover.Natural, EcoUnit.decreasingPES)
+    val lo_floss: ListMap[Long, Double] = SpontaneousPropensities.propensity(degradation.last._2, this.composition, es_map, this.s_flo, LandCover.LowIntensity, EcoUnit.decreasingPES)
+    val hi_floss: ListMap[Long, Double] = SpontaneousPropensities.propensity(lo_floss.last._2, this.composition, es_map, this.s_flo, LandCover.HighIntensity, EcoUnit.decreasingPES)
     ((recovery, degradation, lo_floss, hi_floss), hi_floss.last._2)
 
   /**
@@ -39,7 +40,7 @@ trait SpontaneousPropensities:
    */
   def selectSpontaneous(
                          x_rnd: Double,
-                         prop: (ListMap[(Long,EcoUnit), Double], ListMap[(Long,EcoUnit), Double], ListMap[(Long,EcoUnit), Double], ListMap[(Long,EcoUnit), Double])
+                         prop: (ListMap[Long, Double], ListMap[Long, Double], ListMap[Long, Double], ListMap[Long, Double])
                        ):
   EventType = 
     x_rnd match 
@@ -62,15 +63,16 @@ object SpontaneousPropensities:
    */
   def propensity(
                   i_val:Double,
-                  es_map:Map[(Long,EcoUnit),Double],
+                  comp: Map[Long,EcoUnit],
+                  es_map:Map[Long,Double],
                   s:Double,
                   c:LandCover,
                   f:(Double,Double)=>Double
                 ):
-  ListMap[(Long,EcoUnit),Double]=
+  ListMap[Long,Double]=
     es_map.filter{
-      case ((_,u),_) => u.matchCover(c)
-    }.scanLeft( (es_map.head._1, i_val) ){ 
+      case (id,_) => comp.getOrElse(id,EcoUnit()).matchCover(c)
+    }.scanLeft( (new Long(), i_val) ){
       (pre, now) => ( now._1, f(s,now._2) + pre._2 ) 
     }.to(ListMap)
 

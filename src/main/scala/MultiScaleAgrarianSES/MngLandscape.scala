@@ -15,11 +15,12 @@ the number of Management Units f the Management Landscape that apply a land-spar
 @author diego
 */
 case class MngLandscape(
-                         composition: Graph[(Long,MngUnit),UnDiEdge],
+                         composition: Map[Long,MngUnit],
+                         structure: Graph[Long,UnDiEdge],
                          scale: Double,
                          n_sparing: Int,
                          size: Int)
-  extends TopLandscape[MngUnit] with SpatialStochasticEvents:
+  extends TopLandscape with SpatialStochasticEvents:
   /**
    * Calculates the propensity of choosing each MngUnit for agricultural expansion.
    * @param ival initial value for the cumulative sum of conversion propensities in each MngUnit
@@ -29,12 +30,12 @@ case class MngLandscape(
   def propensityOfMngUnits(
                             i_val: Double,
                             tcp: Double,
-                            pln: Graph[(Long,PlnUnit),UnDiEdge],
-                            eco: Graph[(Long,EcoUnit),UnDiEdge]
+                            pln: Map[Long,PlnUnit],
+                            eco: Map[Long,EcoUnit]
                           ):
-  ListMap[(Long,MngUnit),Double] =
-    val propensities: Map[(Long,MngUnit),Double] = MngLandscape.probabilities(this.composition,pln,eco)
-    propensities.scanLeft((propensities.head._1, i_val))( (pre, now) => (now._1, now._2 + pre._2)).to(ListMap)
+  ListMap[Long,Double] =
+    val propensities: Map[Long,Double] = MngLandscape.probabilities(this.composition,pln,eco)
+    propensities.scanLeft((new Long(), i_val))( (pre, now) => (now._1, now._2 + pre._2)).to(ListMap)
 
 object MngLandscape :
   /**
@@ -54,16 +55,16 @@ object MngLandscape :
            ):
   MngLandscape =
     val nm = TopLandscape.numberOfUnits(scale,pln.size)
-    val tess_graph: Graph[Vector[Long],UnDiEdge] = pln.tesselate(nm)
+    val (compInit, struct): (Map[Long,Vector[Long]], Graph[Long,UnDiEdge]) = pln.tesselate(nm)
     val n_sparing = fs * nm
-    val sparing_ids: List[Vector[Long]] = rnd.shuffle(tess_graph.nodes.toOuter.toList).take( (fs * n_sparing).toInt )
-    val comp = tess_graph.zipWithIndex.map{ (x,id) =>
-      //TODO: idk how map functions i.e. how to preserve edges and change node values
-      if sparing_ids.contains(x.value)
-      then (id,MngUnit(id,x.value,MngStrategy.LandSparing))
-      else (id,MngUnit(id,x.value,MngStrategy.LandSharing))
+    val sparing_ids: Vector[Long] = rnd.shuffle(compInit.keys).take( (fs * n_sparing).toInt ).toVector
+    val comp = compInit.map{
+      case (id,vec) =>
+        if sparing_ids.contains(id)
+        then (id,MngUnit(id,vec,MngStrategy.LandSparing))
+        else (id,MngUnit(id,vec,MngStrategy.LandSparing))
     }
-    MngLandscape(comp,scale,n_sparing.toInt,nm)
+    MngLandscape(comp,struct,scale,n_sparing.toInt,nm)
 
   /**
    *  Calculate the relative probabilities for each MngUnit to be selected for a conversion event.
@@ -74,12 +75,12 @@ object MngLandscape :
    * @note At the current modeling stage MngUnits are selected with uniform probability
   */
   def probabilities(
-                     mng: Graph[(Long,MngUnit), UnDiEdge],
-                     pln: Graph[(Long,PlnUnit), UnDiEdge],
-                     eco: Graph[(Long,EcoUnit), UnDiEdge]
+                     mng: Map[Long,MngUnit],
+                     pln: Map[Long,PlnUnit],
+                     eco: Map[Long,EcoUnit]
                    ):
-  Map[(Long,MngUnit),Double] =
-    val available_units = mng.nodes.toOuter.filter( _._2.isAvailable(pln,eco) )
-    available_units.map( (_, 1.0/available_units.size) ).toMap
+  Map[Long,Double] =
+    val available_units = mng.filter( _._2.isAvailable(pln,eco) )
+    available_units.map{ case (id,_) => (id, 1.0/available_units.size) }
 
 end MngLandscape

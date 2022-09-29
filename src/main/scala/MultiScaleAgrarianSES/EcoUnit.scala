@@ -21,6 +21,10 @@ case class EcoUnit(
 
 object EcoUnit:
 
+  def apply():
+  EcoUnit =
+    EcoUnit(new Long(), LandCover.NoCover)
+
   /**
   @param c1 first land cover type
   @param c2 second land cover type

@@ -35,20 +35,24 @@ extends LandscapeUnit:
    * @return true if available, false if not.
    * */
   def isAvailable(
-                   eco: Graph[(Long,EcoUnit),UnDiEdge]
+                   eco: Map[Long,EcoUnit]
                  ): 
   Boolean =
     PlnUnit.isAvailable(this.composition, eco)
 
 object PlnUnit :
 
+  def apply():
+  PlnUnit =
+    PlnUnit(new Long(), Vector())
+
   /**
-  @param r the radius of the EcoLandscape at the base of the PlnLandscape containing this PlnUnit.
-  @param comp the composition of the PlnUnit
-  @return an RDD with the IDs of each ecological unit adjacent to the planning unit
+  //@param r the radius of the EcoLandscape at the base of the PlnLandscape containing this PlnUnit.
+  //@param comp the composition of the PlnUnit
+  //@return an RDD with the IDs of each ecological unit adjacent to the planning unit
   */
   /**
-   * TODO: Not sure this function is needed, if it is need to correct.
+  // * TODO: Not sure this function is needed, if it is need to correct.
   def adjacent(
     r: Int,
     comp: ParVector[VertexId]):
@@ -62,21 +66,21 @@ object PlnUnit :
   */
   def isAvailable(
                    comp: Vector[Long],
-                   eco: Graph[(Long,EcoUnit),UnDiEdge]
+                   eco: Map[Long,EcoUnit]
                  ):
   Boolean =
     // get all the eco units inside this planning unit
-    val plnU = eco.nodes.toOuter.filter {
-      case (id, _) => comp.contains(id)
-    }
+    val plnU: Vector[EcoUnit] = eco.collect {
+      case (id, u) if comp.contains(id) => u
+    }.toVector
     // check if there is at least one natural unit that can be converted
     val predicate1 = plnU.exists{
-      case (_,u) => u.matchCover(LandCover.Natural) 
+      _.matchCover(LandCover.Natural)
     }
     // now check that there are not agricultural units
-    val predicate2 = plnU.exists{
-      case (_,u) => u.matchCover(LandCover.LowIntensity) || u.matchCover(LandCover.HighIntensity)
-    }
+    val predicate2 = plnU.exists(
+      u => u.matchCover(LandCover.LowIntensity) || u.matchCover(LandCover.HighIntensity)
+    )
     predicate1 && !predicate2
 
   /**

@@ -27,15 +27,11 @@ case class MngUnit(
   @return true if the unit is available, false if it isn't
   */
   def isAvailable(
-                   pln: Graph[(Long,PlnUnit),UnDiEdge],
-                   eco: Graph[(Long,EcoUnit),UnDiEdge]
+                   pln: Map[Long,PlnUnit],
+                   eco: Map[Long,EcoUnit]
                  ):
   Boolean =
-    this.composition.exists {
-      id => pln.nodes.toOuter.collectFirst(
-        { case x if x._1 == id => x._2.isAvailable(eco) }
-      ).contains(true)
-    }
+    PlnLandscape.subLandscape(pln,this.composition).exists(_._2.isAvailable(eco))
 
   /**
   Calculates the conversion propensity for each of the PlnUnits belonging to this MngUnit given this MngUnit's conversion
@@ -50,25 +46,28 @@ case class MngUnit(
                             i_val: Double,
                             u_tcp: Double,
                             pln: PlnLandscape,
-                            eco: Graph[(Long,EcoUnit),UnDiEdge]
+                            eco: Map[Long,EcoUnit]
                           ):
-  ListMap[(Long,PlnUnit),Double] =
+  ListMap[Long,Double] =
     // Calculate the individual propensities, sort them by id and store them in a ListMap
-    val prop: ListMap[(Long,PlnUnit),Double] =
+    val prop: ListMap[Long,Double] =
       ListMap(
         MngUnit.weights(this.composition,pln,eco,this.strategy)
           .map{
-            case ((id,u),prop) => ( (id,u), prop * u_tcp)
+            case (id,p) => (id, p * u_tcp)
           }
-          .toSeq.sortWith(_._1._1 < _._1._1):_*
+          .toSeq.sortWith(_._1 < _._1):_*
       )
     // Cumulative sum starting with the initial value and yielding the cumulative propensities scaled to the rest of the world's propensities
-    
-    prop.scanLeft[((Long,PlnUnit),Double)]((prop.head._1,i_val)){
+    prop.scanLeft[(Long,Double)]((new Long(),i_val)){
       (pre, now) => (now._1, now._2 + pre._2)
     }.to(ListMap)
 
 object MngUnit :
+
+  def apply():
+  MngUnit =
+    MngUnit(new Long(),Vector(),MngStrategy.LandSharing)
   /**
   @param comp the composition of this MngUnit
   @param pln the PlnLandscape containing the PlnUnits from this MngUnit
@@ -79,20 +78,19 @@ object MngUnit :
   def weights(
                comp: Vector[Long],
                pln: PlnLandscape,
-               eco: Graph[(Long,EcoUnit),UnDiEdge],
+               eco: Map[Long,EcoUnit],
                stg: MngStrategy
              ):
-  Map[(Long,PlnUnit),Double] =
+  Map[Long,Double] =
 
     def normalize(
-                   v: Map[(Long,PlnUnit),Double]
+                   v: Map[Long,Double]
                  ):
-    Map[(Long,PlnUnit),Double] =
-      // normalization step
+    Map[Long,Double]=
       // normally w should be strictly positive since this calculation would be never
       // done in an unavailable unit, this is being extra cautious and can be helpful for debugging
-      val v_tot: Double = v.foldLeft(0.0)( (sum, map) => sum + map._2)
-      if v_tot > 0.0 then v.map{ case ((id,unit),p) => ((id,unit),p/v_tot) } else v
+      val v_tot: Double = v.foldLeft[Double](0.0)( (sum, map) => sum + map._2)
+      if v_tot > 0.0 then v.map{ case (id,p) => (id,p/v_tot) } else v
 
     // land-sparing units prefer to segregate new conversions from natural land
     // thus weighting more available units close to unavailable ones
@@ -102,13 +100,13 @@ object MngUnit :
       case MngStrategy.LandSparing =>
         normalize( pln.unavailableNeighbors(comp,eco)
           .map{
-            case ((id,unit),nn) => ((id,unit), PlnUnit.weightExpression(nn, MngStrategy.LandSparing.clustering))
+            case (id,nn) => (id, PlnUnit.weightExpression(nn, MngStrategy.LandSparing.clustering))
           }
         )
       case MngStrategy.LandSharing =>
         normalize( pln.availableNeighbors(comp,eco)
           .map{
-            case ((id,unit),nn) => ((id, unit), PlnUnit.weightExpression(nn, MngStrategy.LandSharing.clustering))
+            case (id,nn) => (id, PlnUnit.weightExpression(nn, MngStrategy.LandSharing.clustering))
           }
         )
 

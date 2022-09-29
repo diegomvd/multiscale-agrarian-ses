@@ -4,7 +4,7 @@ package MultiScaleAgrarianSES
  * landscape can also be a base landscape, as it is the case currently with the planning landscape. This feature allows
  * for the construction of nested landscapes' hierarchies.
  * */
-trait TopLandscape[T] extends Landscape[T] :
+trait TopLandscape extends Landscape :
   val scale: Double
 
 object TopLandscape :

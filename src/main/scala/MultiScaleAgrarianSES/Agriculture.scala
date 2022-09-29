@@ -14,11 +14,13 @@ trait Agriculture:
   */
   val yes: Double
   val his: Double
+  val composition: Map[Long,EcoUnit]
+
   def resourceProduction(
-                          es_graph: Graph[(EcoUnit,Double), UnDiEdge]
+                          es: Map[Long,Double]
                         ):
   Double =
-    Agriculture.calculateProduction(es_graph,yes,his)
+    Agriculture.calculateProduction(this.composition,es,yes,his)
 
 object Agriculture:
   /**
@@ -28,16 +30,17 @@ object Agriculture:
   @return the total amount of resources produced in the low-intensity units
   */
   def lowIntResources(
-                       es_graph: Graph[(EcoUnit,Double), UnDiEdge],
+                       comp: Map[Long,EcoUnit],
+                       es: Map[Long,Double],
                        yes: Double,
                        his: Double
                      ):
   Double =
     // traverses the set of nodes and sums contribution when the EcoUnit is of LowIntensity type
-    es_graph.nodes.foldLeft[Double](0.0){
+    es.foldLeft[Double](0.0){
       (production, n) =>
-        if n.toOuter._1.matchCover(LandCover.LowIntensity)
-        then production + EcoUnit.lowIntResEquation(yes,his,n.toOuter._2)
+        if comp.getOrElse(n._1,EcoUnit()).matchCover(LandCover.LowIntensity)
+        then production + EcoUnit.lowIntResEquation(yes,his,n._2)
         else production
     }
 
@@ -45,12 +48,13 @@ object Agriculture:
   @return the total amount of resources produced in the high-intensity units
   */
   def highIntResources(
-                        es_graph: Graph[(EcoUnit,Double), UnDiEdge]
+                        comp: Map[Long, EcoUnit],
+                        es: Map[Long, Double] // note ecosystem ser ices are not really needed for HI in this version of the model
                       ):
   Double =
-    es_graph.nodes.foldLeft[Double](0.0) {
+    es.foldLeft[Double](0.0) {
       (production, n) =>
-        if n.toOuter._1.matchCover(LandCover.HighIntensity)
+        if comp.getOrElse(n._1,EcoUnit()).matchCover(LandCover.HighIntensity)
         then production + EcoUnit.highIntResEquation()
         else production
     }
@@ -59,11 +63,12 @@ object Agriculture:
   @return the total amount of resources produced in the landscape
   */
   def calculateProduction(
-                           es_graph: Graph[(EcoUnit,Double), UnDiEdge],
+                           comp: Map[Long, EcoUnit],
+                           es: Map[Long, Double],
                            yes: Double,
                            his: Double
                          ):
   Double =
-      lowIntResources(es_graph,yes,his) + highIntResources(es_graph)
+      lowIntResources(comp,es,yes,his) + highIntResources(comp,es)
 
 end Agriculture

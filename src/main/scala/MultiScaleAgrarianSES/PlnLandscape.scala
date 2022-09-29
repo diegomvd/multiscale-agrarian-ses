@@ -17,11 +17,12 @@ MngLandscape. It is composed by a collection of PlnUnits.
       EcoLandscape is functional connectivity rather than adjacency
 */
 case class PlnLandscape(
-                         composition: Graph[(Long,PlnUnit),UnDiEdge],
+                         composition: Map[Long,PlnUnit],
+                         structure: Graph[Long,UnDiEdge],
                          scale: Double,
                          size: Int
                        )
-  extends TopLandscape[PlnUnit] with BaseLandscape[PlnUnit] with SpatialStochasticEvents:
+  extends TopLandscape with BaseLandscape with SpatialStochasticEvents:
 
     /**
      * Calculates the number of available neighbors of each PlnUnit in the selected MngUnit. Used to determine the
@@ -33,10 +34,10 @@ case class PlnLandscape(
     */
     def availableNeighbors(
                             mng_unit: Vector[Long],
-                            eco: Graph[(Long,EcoUnit),UnDiEdge]
+                            eco: Map[Long,EcoUnit]
                           ):
-    Map[(Long, PlnUnit), Int] =
-      PlnLandscape.neighborAvailability(this.subLandscape(mng_unit),eco,true)
+    Map[Long, Int] =
+      PlnLandscape.neighborAvailability(this.subLandscape(mng_unit),this.structure,eco,true)
 
     /**
      * Calculates the number of unavailable neighbors of each PlnUnit in the selected MngUnit. Used to determine the
@@ -48,10 +49,10 @@ case class PlnLandscape(
      */
     def unavailableNeighbors(
                               mng_unit: Vector[Long],
-                              eco: Graph[(Long, EcoUnit), UnDiEdge]
+                              eco: Map[Long,EcoUnit]
                             ):
-    Map[(Long,PlnUnit),Int] =
-      PlnLandscape.neighborAvailability(this.subLandscape(mng_unit),eco,false)
+    Map[Long,Int] =
+      PlnLandscape.neighborAvailability(this.subLandscape(mng_unit),this.structure,eco,false)
 
     /**
      * Selects a part of this PlnLandscape corresponding to the composition of a MngUnit.
@@ -62,8 +63,8 @@ case class PlnLandscape(
     def subLandscape(
                       mng_unit: Vector[Long]
                     ):
-    Graph[(Long,PlnUnit),UnDiEdge] =
-      this.composition.filter( x => mng_unit.contains(x.value) )
+    Map[Long,PlnUnit] =
+      this.composition.filter( mng_unit.contains(_) )
 
 object PlnLandscape :
   /**
@@ -74,12 +75,13 @@ object PlnLandscape :
    * @todo need to check these functions depending on tesselation. Update to scala-graph still uncertain, need to work out
    *       the voronoi tesselation first
   */
-  def buildComposition(
-                        nu: Int,
-                        eco: EcoLandscape
-                      ):
-  Graph[(Long,PlnUnit),UnDiEdge] =
-    eco.tesselate(nu).mapVertices( (_,vec) => PlnUnit(vec) )
+  def buildCompositionAndStructure(
+                                    nu: Int,
+                                    eco: EcoLandscape
+                                  ):
+  (Map[Long,PlnUnit], Graph[Long,UnDiEdge]) =
+    val (compInit, struct): (Map[Long,Vector[Long]], Graph[Long,UnDiEdge]) = eco.tesselate(nu)
+    (compInit.map{case (id,vec) => (id,PlnUnit(id,vec))}, struct)
 
   /**
    * Builds a PlnLandscape given its base landscape and its relative scale
@@ -93,9 +95,10 @@ object PlnLandscape :
              eco: EcoLandscape
            ):
   PlnLandscape =
-    val nu = TopLandscape.numberOfUnits(scale,eco.size)
-    val comp = buildComposition(nu,eco)
-    PlnLandscape(comp,scale,nu)
+    val adjacencyNeighborhoodEcoLandscape: EcoLandscape = eco.copy(structure = EcoLandscape.buildStructure(eco.composition,1))
+    val nu = TopLandscape.numberOfUnits(scale,adjacencyNeighborhoodEcoLandscape.size)
+    val (comp,struct) = buildCompositionAndStructure(nu,adjacencyNeighborhoodEcoLandscape)
+    PlnLandscape(comp,struct,scale,nu)
 
   /**
    * Determines the un/availability of the neighbors of each PlnUnit in the selected MngUnit.
@@ -106,17 +109,24 @@ object PlnLandscape :
    * @todo must check if there is need to send 0 when dstAttr is not available
   */
   def neighborAvailability(
-                            comp: Graph[(Long,PlnUnit), UnDiEdge],
-                            eco: Graph[(Long,EcoUnit), UnDiEdge],
+                            comp: Map[Long,PlnUnit],
+                            struct: Graph[Long,UnDiEdge],
+                            eco: Map[Long,EcoUnit],
                             available: Boolean
                           ):
-  Map[(Long,PlnUnit), Int] =
-  
-    val iNode = comp.nodes.head
-    (comp get iNode).innerNodeTraverser.withKind(DepthFirst).collect{
-      case n if n.toOuter._2.isAvailable(eco) =>
-        if available then (n.toOuter, n.neighbors.count( _.toOuter._2.isAvailable(eco) ))
-        else (n.toOuter, n.neighbors.count( !_.toOuter._2.isAvailable(eco) ))
+  Map[Long, Int] =
+    val iNode = struct.nodes.head.toOuter
+    (struct get iNode).innerNodeTraverser.withKind(DepthFirst).collect{
+      case n if comp.getOrElse(n.toOuter,PlnUnit()).isAvailable(eco) =>
+        if available then (n.toOuter, n.neighbors.count(x => comp.getOrElse(x.toOuter,PlnUnit()).isAvailable(eco) ))
+        else (n.toOuter, n.neighbors.count(x => !comp.getOrElse(x.toOuter,PlnUnit()).isAvailable(eco) ))
     }.toMap
+
+  def subLandscape(
+                    composition: Map[Long,PlnUnit],
+                    mng_unit: Vector[Long]
+                  ):
+  Map[Long, PlnUnit] =
+    composition.filter(mng_unit.contains(_))
 
 end PlnLandscape

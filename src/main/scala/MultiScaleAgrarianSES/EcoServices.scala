@@ -15,24 +15,25 @@ trait EcoServices :
 
   val size: Int
   val scal_exp: Double
-  val comp: Graph[(Long,EcoUnit), UnDiEdge]
+  val composition: Map[Long,EcoUnit]
+  val structure: Graph[Long,UnDiEdge]
 
   /**
    * @return a map with the EcoUnit as key and their incoming ES flow as value
    * */
   def ecoServices:
-  Map[(Long,EcoUnit), Double]  =
+  Map[Long, Double]  =
     val ncc = this.naturalConnectedComponents
     val ncm = EcoServices.nodeComponentMembership(ncc)
     val nam = EcoServices.nccNormalizedAreaMap(ncc,this.size.toDouble)
     val out = EcoServices.outgoingEcoServicePerUnit(ncm,nam,this.scal_exp)
-    EcoServices.incomingEcoServicePerUnit(this.comp,out)
+    EcoServices.incomingEcoServicePerUnit(this.structure,out)
 
   /**
    *  @return the set of disconnected natural connected components
    */
-  def naturalConnectedComponents: Map[Long, Graph[(Long,EcoUnit), UnDiEdge]] =
-    this.comp.componentTraverser().withSubgraph(n => n.toOuter._2.matchCover(LandCover.Natural)) // Get components of the natural subgraph
+  def naturalConnectedComponents: Map[Long, Graph[Long, UnDiEdge]] =
+    this.structure.componentTraverser().withSubgraph(n => this.composition.getOrElse(n.toOuter,EcoUnit()).matchCover(LandCover.Natural)) // Get components of the natural subgraph
       .map(_.to(Graph)) // Cast the components to graphs
       .zipWithIndex // Associate each component with an index
       .map(_.swap) // Invert order of indices and graphs
@@ -47,11 +48,11 @@ object EcoServices :
    * @return the ecounit-ncc map
    * */
   def nodeComponentMembership(
-                               ncc: Map[Long, Graph[(Long,EcoUnit), UnDiEdge]]
+                               ncc: Map[Long, Graph[Long, UnDiEdge]]
                              ):
-  Map[(Long,EcoUnit), Long] =
-    ncc.flatMap {
-      case (id, graph) => graph.nodes.toOuter.toList.map(node => (node, id))
+  Map[Long, Long] =
+    ncc.flatMap{
+      case (id, graph) => graph.nodes.toOuter.map(node => (node, id))
     }
 
   /**
@@ -60,11 +61,11 @@ object EcoServices :
    * @return the map ncc-area
    * */
   def nccNormalizedAreaMap(
-                            ncc: Map[Long, Graph[(Long,EcoUnit), UnDiEdge]],
+                            ncc: Map[Long, Graph[Long, UnDiEdge]],
                             size: Double
                           ):
   Map[Long,Double] =
-    ncc.map {
+    ncc.map{
       case (id, graph) => (id, graph.nodes.size.toDouble / size)
     }
 
@@ -81,11 +82,11 @@ object EcoServices :
     pow(a, z)
 
   def outgoingEcoServicePerUnit(
-                                 ncm: Map[(Long,EcoUnit),Long],
+                                 ncm: Map[Long,Long],
                                  nam: Map[Long,Double],
                                  scaling_exp: Double
                                ):
-  Map[(Long,EcoUnit), Double] =
+  Map[Long, Double] =
     ncm.map{
       case (node, nccId) => (node, esAreaRelation( nam.getOrElse(nccId, 0.0), scaling_exp) )
     }
@@ -93,12 +94,11 @@ object EcoServices :
   /**
    * Calculates the ecosystem service */
   def incomingEcoServicePerUnit(
-                                 comp: Graph[(Long,EcoUnit), UnDiEdge],
-                                 out: Map[(Long,EcoUnit), Double]
+                                 struct: Graph[Long, UnDiEdge],
+                                 out: Map[Long,Double]
                                ):
-  Map[(Long,EcoUnit), Double] =
-    val iNode = comp.nodes.head
-    comp.get(iNode).innerNodeTraverser.map[((Long,EcoUnit), Double)]{
+  Map[Long, Double] =
+    (struct get struct.nodes.head).innerNodeTraverser.map[(Long, Double)]{
       n =>
         val (count,es) =
           n.neighbors.foldLeft[(Int, Double)]((0, 0.0)) { // (neighbor count, eco services)
@@ -108,6 +108,8 @@ object EcoServices :
     }.toMap
 
 end EcoServices
+
+
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
