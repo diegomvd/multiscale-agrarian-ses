@@ -10,37 +10,33 @@ import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
 trait Agriculture:
   /**
   yes is the contribution of ES to resource production in LI units
-  his is the number of households that can be supported by the production of one HI unit
   */
   val yes: Double
-  val his: Double
   val composition: Map[Long,EcoUnit]
 
   def resourceProduction(
                           es: Map[Long,Double]
                         ):
   Double =
-    Agriculture.calculateProduction(this.composition,es,yes,his)
+    Agriculture.calculateProduction(this.composition,es,yes)
 
 object Agriculture:
   /**
-  @param es_graph is the biophysical composition of the landscape joined with the es flow
+  @param es is the biophysical composition of the landscape joined with the es flow
   @param yes is the contribution of ecosystem services to low-intensity agricultural production
-  @param his is the number of households that are maintained with the production of one high-intensity unit
   @return the total amount of resources produced in the low-intensity units
   */
   def lowIntResources(
                        comp: Map[Long,EcoUnit],
                        es: Map[Long,Double],
-                       yes: Double,
-                       his: Double
+                       yes: Double
                      ):
   Double =
     // traverses the set of nodes and sums contribution when the EcoUnit is of LowIntensity type
     es.foldLeft[Double](0.0){
       (production, n) =>
         if comp.getOrElse(n._1,EcoUnit()).matchCover(LandCover.LowIntensity)
-        then production + EcoUnit.lowIntResEquation(yes,his,n._2)
+        then production + lowIntResEquation(yes,n._2)
         else production
     }
 
@@ -55,7 +51,7 @@ object Agriculture:
     es.foldLeft[Double](0.0) {
       (production, n) =>
         if comp.getOrElse(n._1,EcoUnit()).matchCover(LandCover.HighIntensity)
-        then production + EcoUnit.highIntResEquation()
+        then production + highIntResEquation()
         else production
     }
 
@@ -65,10 +61,26 @@ object Agriculture:
   def calculateProduction(
                            comp: Map[Long, EcoUnit],
                            es: Map[Long, Double],
-                           yes: Double,
-                           his: Double
+                           yes: Double
                          ):
   Double =
-      lowIntResources(comp,es,yes,his) + highIntResources(comp,es)
+      lowIntResources(comp,es,yes) + highIntResources(comp,es)
+
+  /**
+   *  @param yes is
+   *  @param es is the ecosystem service inflow
+   *  @return the resource production in a low intensity unit
+   */
+  def lowIntResEquation(
+                         yes: Double,
+                         es: Double
+                       ):
+  Double =
+    (1.0 - yes) + yes * es
+
+
+  def highIntResEquation():
+  Double =
+    1.0
 
 end Agriculture

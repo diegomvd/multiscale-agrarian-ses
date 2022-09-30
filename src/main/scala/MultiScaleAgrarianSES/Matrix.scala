@@ -175,11 +175,17 @@ object Matrix :
             val unitId = world.eco.selectUnitId(x_rnd, spontP._1._4)
             val upd_eco: EcoLandscape = world.eco.update( unitId, EcoUnit(unitId,LandCover.Degraded))
             (world.copy(t = new_t, eco = upd_eco), EventType.HighIntensityFertilityLoss)
+          case _ =>
+            println("Wrong type of event in Matrix:update: should be a spontaneous one")
+            (world, EventType.NoEvent)
         }
       case EventType.Conversion =>
         val (ids, units): (Vector[Long], Vector[EcoUnit]) = world.eco.resolveConversionEvent(x_rnd,spontP._2,world.pln,world.mng,tcP)
         val upd_eco: EcoLandscape = world.eco.update(ids, units)
         (world.copy(t = new_t, eco = upd_eco), EventType.Conversion)
+      case _ =>
+        println("Wrong type of event in Matrix:update")
+        (world, EventType.NoEvent)
     }
 
   /**

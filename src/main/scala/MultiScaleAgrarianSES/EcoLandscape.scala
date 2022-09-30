@@ -4,7 +4,6 @@ import scala.annotation.tailrec
 import scala.collection.immutable.ListMap
 import scala.math.pow
 import scala.util.Random as rnd
-import scala.collection.parallel.immutable.ParVector
 
 import scalax.collection.Graph
 import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
@@ -16,8 +15,6 @@ import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
  * ecr: Ecological Connectivity Range
  * scal_exp: the scaling exponent of the power-law ecosystem services-area relationship
  * yes: contribution of ecosystem services to agricultural production in low-intensity units
- * his: the number of households that can be supported by a single high-intensity unit. This is used in the production
- * function.
  * s_rec: sensitivity of land recovery propensity to ecosystem service provision. Higher sensitivity means more response
  * to ecosystem services.
  * s_deg: idem for degradation.
@@ -38,7 +35,6 @@ case class EcoLandscape(
                          ecr: Int,
                          scal_exp: Double,
                          yes: Double,
-                         his: Double,
                          s_rec: Double,
                          s_deg: Double,
                          s_flo: Double)
@@ -139,7 +135,6 @@ object EcoLandscape :
   * @param ecr is the ecological connectivity range and determines biophysical connections between units
   * @param scal_exp is the scaling exponent of the power-law ecosystem services - area relationship
   * @param yes is the contribution of ecosystem services to production in low-intensity units
-  * @param his is the number of households that are sustained by one high-intensity unit
   * @param s_rec is land recovery sensitivity to ecosystem service provision
   * @param s_deg is land degradation sensitivity to ecosystem service provision
   * @param s_flo is fertility loss sensitivity to ecosystem service provision
@@ -151,7 +146,6 @@ object EcoLandscape :
              ecr: Int,
              scal_exp: Double,
              yes: Double,
-             his: Double,
              s_rec: Double,
              s_deg: Double,
              s_flo: Double
@@ -159,7 +153,7 @@ object EcoLandscape :
   EcoLandscape =
     val comp = buildComposition(r)
     val struct = buildStructure(r,comp,ecr)
-    EcoLandscape(comp,struct,ModCo.area(r),ecr,scal_exp,yes,his,s_rec,s_deg,s_flo)
+    EcoLandscape(comp,struct,ModCo.area(r),ecr,scal_exp,yes,s_rec,s_deg,s_flo)
 
   /**
   @param r is the radius of the biophysical landscape
@@ -256,7 +250,9 @@ object EcoLandscape :
             val upd_n_deg = n._1
             (upd_n_agr, upd_n_deg)
           }
-      
+        case _ => 
+          println("Wrong type of event in EcoLandscape:updateRemaining")
+          (0,0)
 
     @tailrec
     def rec(

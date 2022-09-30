@@ -5,4 +5,4 @@ package MultiScaleAgrarianSES
  * */
 enum EventType:
   case Spontaneous, Conversion, Demographic, Recovery, Degradation, FertilityLoss, LowIntensityFertilityLoss,
-  HighIntensityFertilityLoss, LowIntensityConversion, HighIntensityConversion, Birth, Death
+  HighIntensityFertilityLoss, LowIntensityConversion, HighIntensityConversion, Birth, Death, NoEvent

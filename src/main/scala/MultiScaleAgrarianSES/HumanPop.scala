@@ -10,7 +10,8 @@ TODO: Still need to write the function for the death propensity
 
 case class HumanPop(
                      size: Int,
-                     s_res: Double
+                     s_res: Double,
+                     his: Double
                    ):
 
   /**
@@ -25,6 +26,7 @@ case class HumanPop(
     demo match {
       case EventType.Birth => this.copy(size = HumanPop.birth(this.size))
       case EventType.Death => this.copy(size = HumanPop.death(this.size))
+      case _ => println("Wrong type of event in HumanPop:update"); this
     }
 
   /**
@@ -57,8 +59,12 @@ case class HumanPop(
                              ):
   (Double,Double) =
     val birth: Double = HumanPop.birthPropensity(i_val)
-    val death: Double = HumanPop.deathPropensity(birth,this.size,resources)
-    (birth,death)
+    if resources > 0.0 then
+      val death: Double = HumanPop.deathPropensity(birth,this.size,resources,this.his)
+      (birth,death)
+    else // If resources is 0.0 then set it to his/1000.0 to avoid division by 0.0. This will be small enough for it to be a substantial drop in population
+      val death: Double = HumanPop.deathPropensity(birth,this.size,this.his/1000.0,this.his)
+      (birth,death)
 
 object HumanPop :
 
@@ -84,11 +90,13 @@ object HumanPop :
   Double =
     i_val + 1.0
   def deathPropensity(
-                       ival: Double,
-                       size: Int,
-                       resources: Double):
+                       i_val: Double,
+                       popSize: Int,
+                       resources: Double,
+                       his: Double,
+                     ):
   Double =
-    ival + 0.0 //function here
+    i_val + popSize*popSize/resources/his
 
   /**
    * Returns the type of Demographic event given a random number and the demographic propensities.

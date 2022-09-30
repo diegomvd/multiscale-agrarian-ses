@@ -1,7 +1,6 @@
 package MultiScaleAgrarianSES
 
 import scala.collection.immutable.ListMap
-import scala.collection.parallel.immutable.ParVector
 import scala.util.Random as rnd
 import scalax.collection.Graph
 import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
