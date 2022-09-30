@@ -91,11 +91,12 @@ object PlnLandscape :
    * @return a PlnLandscape.
    * */
   def apply(
+             r: Int,
              scale: Double,
              eco: EcoLandscape
            ):
   PlnLandscape =
-    val adjacencyNeighborhoodEcoLandscape: EcoLandscape = eco.copy(structure = EcoLandscape.buildStructure(eco.composition,1))
+    val adjacencyNeighborhoodEcoLandscape: EcoLandscape = eco.copy(structure = EcoLandscape.buildStructure(r,eco.composition,1))
     val nu = TopLandscape.numberOfUnits(scale,adjacencyNeighborhoodEcoLandscape.size)
     val (comp,struct) = buildCompositionAndStructure(nu,adjacencyNeighborhoodEcoLandscape)
     PlnLandscape(comp,struct,scale,nu)

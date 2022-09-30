@@ -44,7 +44,7 @@ trait VoronoiTesselation extends SpatialStochasticEvents:
   def newEdges(
                 nodes: Map[Long, Vector[Long]]
               ):
-  List[UnDiEdge] =
+  List[UnDiEdge[Long]] =
     nodes.toSet.subsets(2).collect{
       case s if s.head._2.exists{
         id => (this.structure get id).neighbors.exists{
@@ -109,7 +109,7 @@ object VoronoiTesselation:
       }
         .toSeq.sortWith(_._2>_._2):_* // sorting from largest probability to smallest to speed up selection in average
     )
-      .scanLeft((new Long(),0.0))( (pre,now) => (now._1, pre._2 + now._2)).to(ListMap)
+      .scanLeft((-1L,0.0))( (pre,now) => (now._1, pre._2 + now._2)).to(ListMap)
 
 
   /**

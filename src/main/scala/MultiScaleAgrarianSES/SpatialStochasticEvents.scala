@@ -13,7 +13,7 @@ trait SpatialStochasticEvents:
                                 ):
   (Long, Double) =
     prob.find(x_rnd <= _._2) match
-      case None => (new Long(), new Double())
+      case None => (-1L, 0.0)
       case Some(x) => x
 
   def selectUnitId(
@@ -22,6 +22,6 @@ trait SpatialStochasticEvents:
                   ):
   Long =
     prob.find(x_rnd <= _._2) match
-      case None => new Long()
+      case None => -1L
       case Some(x) => x._1
 

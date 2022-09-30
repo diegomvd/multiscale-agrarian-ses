@@ -14,11 +14,12 @@ import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
  * @author diego
 */
 case class Matrix(
-  t: Double,
-  eco: EcoLandscape,
-  pln: PlnLandscape,
-  mng: MngLandscape,
-  pop: HumanPop):
+                   t: Double,
+                   eco: EcoLandscape,
+                   pln: PlnLandscape,
+                   mng: MngLandscape,
+                   pop: HumanPop
+                 ):
 
   /**
    * Determines whether a simulation is to be terminated. A simulation is terminated if the Matrix's internal time
@@ -27,7 +28,10 @@ case class Matrix(
    * @param maxT the maximum simulation time.
    * @return True if the simulation is to be terminated, False if not.
   */
-  def doesNotHaveNext(maxT: Double): Boolean =
+  def doesNotHaveNext(
+                       maxT: Double
+                     ):
+  Boolean =
     val pred_time: Boolean = this.t > maxT
     val pred_pop: Boolean = this.pop.size == 0
     val pred_deg: Boolean = this.eco.countNatural == 0
@@ -43,7 +47,10 @@ case class Matrix(
    * @param maxT the maximum simulation time.
    * @return the state of the Matrix at the end of the simulation.
   */
-  def simulate(maxT: Double): Matrix =
+  def simulate(
+                maxT: Double
+              ):
+  Matrix =
 
     /**
      * Tail recursive function describing each simulation step.
@@ -59,53 +66,52 @@ case class Matrix(
      * */
     @tailrec
     def rec(
-      world: Matrix,
-      maxT: Double,
-      ncc: VertexRDD[VertexId],
-      es: Graph[(EcoUnit,Double),Long],
-      res: Double,
-      popp: (Double,Double),
-      spontp: ((ListMap[VertexId,Double],ListMap[VertexId,Double],ListMap[VertexId,Double],ListMap[VertexId,Double]),Double),
-      tcp: Double):
+             world: Matrix,
+             maxT: Double,
+             es: Map[Long,Double],
+             res: Double,
+             popP: (Double,Double),
+             spontP: ((ListMap[Long, Double], ListMap[Long, Double], ListMap[Long, Double], ListMap[Long, Double]), Double),
+             tcP: Double
+           ):
     Matrix =
       // return the current state of the Matrix if the simulation is to stop
       if world.doesNotHaveNext(maxT) then world
-
       else {
         // get the new world and in function of the event type actualize
         // propensities and/or ecosystem services or not
-        val (new_world, event): (Matrix, EventType) = Matrix.update(popp,spontp,tcp,world)
+        val (new_world, event): (Matrix, EventType) = Matrix.update(popP,spontP,tcP,world)
         // match the event type
         event match {
           case EventType.Demographic =>  // only the population and conversion propensities are updated
-            val new_popp = new_world.pop.demographicPropensities(0.0,res)
-            val new_tcp = new_world.pop.totalConversionPropensity(res)
-            rec(new_world,maxT,ncc,es,res,new_popp,spontp,new_tcp)
+            val new_popP = new_world.pop.demographicPropensities(0.0,res)
+            val new_tcP = new_world.pop.totalConversionPropensity(res)
+            rec(new_world,maxT,es,res,new_popP,spontP,new_tcP)
 
           case EventType.HighIntensityFertilityLoss => // ecosystem service provision is unchanged by this event, substantial time gain
             val new_res = res - 1.0 // this is just loosing one high intensity unit
-            val new_popp = new_world.pop.demographicPropensities(0.0,new_res)
-            val new_spontp = new_world.eco.spontaneousPropensities(new_popp._2,es)
-            val new_tcp = new_world.pop.totalConversionPropensity(new_res)
-            rec(new_world,maxT,ncc,es,new_res,new_popp,new_spontp,new_tcp)
+            val new_popP = new_world.pop.demographicPropensities(0.0,new_res)
+            val new_spontP = new_world.eco.spontaneousPropensities(new_popP._2,es)
+            val new_tcP = new_world.pop.totalConversionPropensity(new_res)
+            rec(new_world,maxT,es,new_res,new_popP,new_spontP,new_tcP)
 
           case _ =>  // for any other event update everything
-            val (new_ncc, new_es): (VertexRDD[VertexId], Graph[(EcoUnit,Double),Long]) = new_world.eco.ecosystemServiceFlow
+            val new_es: Map[Long,Double] = new_world.eco.ecoServices
             val new_res = new_world.eco.resourceProduction(new_es)
-            val new_popp = new_world.pop.demographicPropensities(0.0,new_res)
-            val new_spontp = new_world.eco.spontaneousPropensities(popp._2,new_es)
-            val new_tcp = new_world.pop.totalConversionPropensity(new_res)
-            rec(new_world,maxT,new_ncc,new_es,new_res,new_popp,new_spontp,new_tcp)
+            val new_popP = new_world.pop.demographicPropensities(0.0,new_res)
+            val new_spontP = new_world.eco.spontaneousPropensities(popP._2,new_es)
+            val new_tcP = new_world.pop.totalConversionPropensity(new_res)
+            rec(new_world,maxT,new_es,new_res,new_popP,new_spontP,new_tcP)
         }
       }
 
-    val (ncc, es): (VertexRDD[VertexId], Graph[(EcoUnit,Double),Long]) = this.eco.ecosystemServiceFlow
+    val es = this.eco.ecoServices
     val res = this.eco.resourceProduction(es)
-    val popp = this.pop.demographicPropensities(0.0, res)
-    val spontp = this.eco.spontaneousPropensities(popp._2, es)
-    val tcp = this.pop.totalConversionPropensity(res)
+    val popP = this.pop.demographicPropensities(0.0, res)
+    val spontP = this.eco.spontaneousPropensities(popP._2, es)
+    val tcP = this.pop.totalConversionPropensity(res)
 
-    rec(this, maxT, ncc, es, res, popp, spontp, tcp)
+    rec(this, maxT, es, res, popP, spontP, tcP)
 
 object Matrix :
 
@@ -120,10 +126,11 @@ object Matrix :
    *       this constructor is called in the same ScalaTask.
   */
   def apply(
-    eco: EcoLandscape,
-    pln: PlnLandscape,
-    mng: MngLandscape,
-    pop: HumanPop):
+             eco: EcoLandscape,
+             pln: PlnLandscape,
+             mng: MngLandscape,
+             pop: HumanPop
+           ):
   Matrix =
     Matrix(0.0,eco,pln,mng,pop)
 
@@ -135,39 +142,43 @@ object Matrix :
    * @return a tuple with the updated world and the event type
   */
   def update(
-    pop: (Double,Double),
-    spont: ((ListMap[VertexId,Double],ListMap[VertexId,Double],ListMap[VertexId,Double],ListMap[VertexId,Double]),Double),
-    tcp: Double,
-    world: Matrix):
+              popP: (Double,Double),
+              spontP: ((ListMap[Long, Double], ListMap[Long, Double], ListMap[Long, Double], ListMap[Long, Double]), Double),
+              tcP: Double,
+              world: Matrix
+            ):
   (Matrix, EventType) =
-
     // expression for the next event time
-    val new_t: Double = world.t - 1.0/log(rnd.between(0.0, pop._2 + spont._2 + tcp))
+    val new_t: Double = world.t - 1.0/log(rnd.between(0.0, popP._2 + spontP._2 + tcP))
     // random number to select an event, maximum is the sum of the cumulative propensities
-    val x_rnd: Double = rnd.between(0.0, pop._2 + spont._2 + tcp)
+    val x_rnd: Double = rnd.between(0.0, popP._2 + spontP._2 + tcP)
 
-    selectEventType(x_rnd,pop._2,spont._2,tcp) match {
+    selectEventType(x_rnd,popP._2,spontP._2,tcP) match {
       case EventType.Demographic =>
-        val upd_pop: HumanPop = world.pop.update(HumanPop.selectBirthOrDeath(x_rnd,pop))
+        val upd_pop: HumanPop = world.pop.update(HumanPop.selectBirthOrDeath(x_rnd,popP))
         (world.copy(t = new_t, pop = upd_pop), EventType.Demographic)
       case EventType.Spontaneous =>
-        world.eco.selectSpontaneous(x_rnd,spont._1) match {
+        world.eco.selectSpontaneous(x_rnd,spontP._1) match {
           case EventType.Recovery =>
-            val upd_eco: EcoLandscape = world.eco.update(world.eco.selectVId(x_rnd, spont._1._1), EcoUnit(LandCover.Natural))
+            val unitId = world.eco.selectUnitId(x_rnd, spontP._1._1)
+            val upd_eco: EcoLandscape = world.eco.update(unitId, EcoUnit(unitId,LandCover.Natural))
             (world.copy(t = new_t, eco = upd_eco), EventType.Recovery)
           case EventType.Degradation =>
-            val upd_eco: EcoLandscape = world.eco.update( world.eco.selectVId(x_rnd, spont._1._2), EcoUnit(LandCover.Degraded))
+            val unitId = world.eco.selectUnitId(x_rnd, spontP._1._2)
+            val upd_eco: EcoLandscape = world.eco.update( unitId, EcoUnit(unitId,LandCover.Degraded))
             (world.copy(t = new_t, eco = upd_eco), EventType.Degradation)
           case EventType.LowIntensityFertilityLoss =>
-            val upd_eco: EcoLandscape = world.eco.update( world.eco.selectVId(x_rnd, spont._1._3), EcoUnit(LandCover.Natural))
+            val unitId = world.eco.selectUnitId(x_rnd, spontP._1._3)
+            val upd_eco: EcoLandscape = world.eco.update( unitId, EcoUnit(unitId,LandCover.Natural))
             (world.copy(t = new_t, eco = upd_eco), EventType.LowIntensityFertilityLoss)
           case EventType.HighIntensityFertilityLoss =>
-            val upd_eco: EcoLandscape = world.eco.update( world.eco.selectVId(x_rnd, spont._1._4), EcoUnit(LandCover.Degraded))
+            val unitId = world.eco.selectUnitId(x_rnd, spontP._1._4)
+            val upd_eco: EcoLandscape = world.eco.update( unitId, EcoUnit(unitId,LandCover.Degraded))
             (world.copy(t = new_t, eco = upd_eco), EventType.HighIntensityFertilityLoss)
         }
       case EventType.Conversion =>
-        val (vids, cover): (VertexRDD[VertexId], EcoUnit) = world.eco.resolveConversionEvent(x_rnd,spont._2,world.pln,world.mng,tcp)
-        val upd_eco: EcoLandscape = world.eco.update(vids, cover)
+        val (ids, units): (Vector[Long], Vector[EcoUnit]) = world.eco.resolveConversionEvent(x_rnd,spontP._2,world.pln,world.mng,tcP)
+        val upd_eco: EcoLandscape = world.eco.update(ids, units)
         (world.copy(t = new_t, eco = upd_eco), EventType.Conversion)
     }
 
@@ -180,15 +191,16 @@ object Matrix :
    * @return the next event's type.
   */
   def selectEventType(
-    x_rnd: Double,
-    pop: Double,
-    spont: Double,
-    tcp: Double):
+                       x_rnd: Double,
+                       popP: Double,
+                       spontP: Double,
+                       tcP: Double
+                     ):
   EventType =
-    x_rnd match {
-      case x if x < pop => EventType.Demographic
-      case x if x < spont => EventType.Spontaneous
-      case x if x < tcp => EventType.Conversion
-   }
+    x_rnd match
+      case x if x < popP => EventType.Demographic
+      case x if x < spontP => EventType.Spontaneous
+      case x if x < tcP => EventType.Conversion
+
 
 end Matrix

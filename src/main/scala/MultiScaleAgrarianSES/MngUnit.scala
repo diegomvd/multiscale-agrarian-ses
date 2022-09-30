@@ -59,7 +59,7 @@ case class MngUnit(
           .toSeq.sortWith(_._1 < _._1):_*
       )
     // Cumulative sum starting with the initial value and yielding the cumulative propensities scaled to the rest of the world's propensities
-    prop.scanLeft[(Long,Double)]((new Long(),i_val)){
+    prop.scanLeft[(Long,Double)]((-1L,i_val)){
       (pre, now) => (now._1, now._2 + pre._2)
     }.to(ListMap)
 
@@ -67,7 +67,7 @@ object MngUnit :
 
   def apply():
   MngUnit =
-    MngUnit(new Long(),Vector(),MngStrategy.LandSharing)
+    MngUnit(-1L,Vector(),MngStrategy.LandSharing)
   /**
   @param comp the composition of this MngUnit
   @param pln the PlnLandscape containing the PlnUnits from this MngUnit

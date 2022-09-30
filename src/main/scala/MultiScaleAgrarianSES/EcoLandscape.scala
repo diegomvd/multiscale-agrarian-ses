@@ -158,7 +158,7 @@ object EcoLandscape :
            ):
   EcoLandscape =
     val comp = buildComposition(r)
-    val struct = buildStructure(comp,ecr)
+    val struct = buildStructure(r,comp,ecr)
     EcoLandscape(comp,struct,ModCo.area(r),ecr,scal_exp,yes,his,s_rec,s_deg,s_flo)
 
   /**
@@ -173,6 +173,7 @@ object EcoLandscape :
     ModCo.apply(r).map { m => (m.toLong,EcoUnit(m.toLong,LandCover.Natural)) }.toMap
 
   def buildStructure(
+                      r: Int,
                       composition: Map[Long,EcoUnit],
                       ecr: Int
                     ):

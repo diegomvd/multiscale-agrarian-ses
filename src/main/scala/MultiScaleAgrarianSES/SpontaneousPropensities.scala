@@ -72,7 +72,7 @@ object SpontaneousPropensities:
   ListMap[Long,Double]=
     es_map.filter{
       case (id,_) => comp.getOrElse(id,EcoUnit()).matchCover(c)
-    }.scanLeft( (new Long(), i_val) ){
+    }.scanLeft( (-1L, i_val) ){
       (pre, now) => ( now._1, f(s,now._2) + pre._2 ) 
     }.to(ListMap)
 

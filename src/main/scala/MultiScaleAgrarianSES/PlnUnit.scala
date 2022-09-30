@@ -44,7 +44,7 @@ object PlnUnit :
 
   def apply():
   PlnUnit =
-    PlnUnit(new Long(), Vector())
+    PlnUnit(-1L, Vector())
 
   /**
   //@param r the radius of the EcoLandscape at the base of the PlnLandscape containing this PlnUnit.

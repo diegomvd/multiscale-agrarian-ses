@@ -35,7 +35,7 @@ case class MngLandscape(
                           ):
   ListMap[Long,Double] =
     val propensities: Map[Long,Double] = MngLandscape.probabilities(this.composition,pln,eco)
-    propensities.scanLeft((new Long(), i_val))( (pre, now) => (now._1, now._2 + pre._2)).to(ListMap)
+    propensities.scanLeft((-1L, i_val))( (pre, now) => (now._1, now._2 + pre._2)).to(ListMap)
 
 object MngLandscape :
   /**

@@ -23,7 +23,7 @@ object EcoUnit:
 
   def apply():
   EcoUnit =
-    EcoUnit(new Long(), LandCover.NoCover)
+    EcoUnit(-1L, LandCover.NoCover)
 
   /**
   @param c1 first land cover type
