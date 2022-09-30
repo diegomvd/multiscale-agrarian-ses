@@ -113,6 +113,11 @@ case class Matrix(
 
     rec(this, maxT, es, res, popP, spontP, tcP)
 
+  def outputStaticLandscapeOptimization:
+  (Double,Double,Int) =
+    val (avg,rob) = this.eco.averageAndRobustnessEcoServices()
+    (avg,rob,this.pop.size)
+
 object Matrix :
 
   /**

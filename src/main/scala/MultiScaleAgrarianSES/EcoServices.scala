@@ -23,23 +23,67 @@ trait EcoServices :
    * */
   def ecoServices:
   Map[Long, Double]  =
-    val ncc = this.naturalConnectedComponents
-    val ncm = EcoServices.nodeComponentMembership(ncc)
-    val nam = EcoServices.nccNormalizedAreaMap(ncc,this.size.toDouble)
-    val out = EcoServices.outgoingEcoServicePerUnit(ncm,nam,this.scal_exp)
-    EcoServices.incomingEcoServicePerUnit(this.structure,out)
+    EcoServices.ecoServices(this.structure,this.composition,this.scal_exp,this.size)
 
   /**
    *  @return the set of disconnected natural connected components
    */
-  def naturalConnectedComponents: Map[Long, Graph[Long, UnDiEdge]] =
-    this.structure.componentTraverser().withSubgraph(n => this.composition.getOrElse(n.toOuter,EcoUnit()).matchCover(LandCover.Natural)) // Get components of the natural subgraph
+  def naturalConnectedComponents:
+  Map[Long, Graph[Long, UnDiEdge]] =
+    EcoServices.naturalConnectedComponents(this.structure,this.composition)
+
+  def averageEcoServices:
+  Double =
+    val es = this.ecoServices
+    es.values.sum/es.size.toDouble
+
+  def robustnessEcoServicesOneReplica(
+                                       average: Double,
+                                     ):
+  Double =
+    @tailrec
+    def rec(
+             threshold: Double,
+             currentAvg: Double,
+             comp: Map[Long, EcoUnit],
+             n: Int
+           ):
+    Double =
+      if currentAvg <= threshold then n.toDouble
+      else
+        val new_n: Int = n + 1
+        val nId: Long = rnd.shuffle(comp.filter(_._2.matchCover(LandCover.Natural)).keys).take(1)
+        val newComp: Map[Long, Double] = comp.map { case (id, _) if id == nId => (id, EcoUnit(id, LandCover.Degraded)) }
+        val newAverage: Double = EcoServices.averageEcoServices(this.structure, newComp, this.scal_exp, this.size)
+        rec(threshold, newAverage, newComp, this.scal_exp, this.size, new_n)
+    val threshold: Double = average * 0.5
+    rec(threshold, average, this.composition, this.scal_exp, this.size, 0) / this.composition.count(_._2.matchCover(LandCover.Natural)).toDouble
+
+  def robustnessEcoServices(
+                             average: Double,
+                             n: Int
+                           ):
+  Double =
+    (0 until n).flatMap(_ => robustnessEcoServicesOneReplica(average)).reduceLeft((a, b) => a + b) / n
+
+  def averageAndRobustnessEcoServices(
+                                       n: Int
+                                     ):
+  (Double,Double) =
+    (this.averageEcoServices,this.robustnessEcoServices(n))
+
+object EcoServices :
+
+  def naturalConnectedComponents(
+                                  struct: Graph[Long,UnDiEdge],
+                                  comp: Map[Long,EcoUnit]
+                                ):
+  Map[Long, Graph[Long, UnDiEdge]] =
+    struct.componentTraverser().withSubgraph(n => comp.getOrElse(n.toOuter, EcoUnit()).matchCover(LandCover.Natural)) // Get components of the natural subgraph
       .map(_.to(Graph)) // Cast the components to graphs
       .zipWithIndex // Associate each component with an index
       .map(_.swap) // Invert order of indices and graphs
-      .map{case (nccId,g) => (nccId.toLong,g)}.toMap // Convert the index to Long type
-
-object EcoServices :
+      .map { case (nccId, g) => (nccId.toLong, g) }.toMap // Convert the index to Long type
 
   /**
    * Creates a Map with EcoUnits as keys and NCC id as value.
@@ -107,60 +151,37 @@ object EcoServices :
         ( n.toOuter, es/count.toDouble )
     }.toMap
 
+  def ecoServices(
+                   struct: Graph[Long,UnDiEdge],
+                   comp: Map[Long,EcoUnit],
+                   scal_exp: Double,
+                   size: Int
+                 ):
+  Map[Long,Double] =
+    val ncc = EcoServices.naturalConnectedComponents(struct, comp)
+    val ncm = EcoServices.nodeComponentMembership(ncc)
+    val nam = EcoServices.nccNormalizedAreaMap(ncc, size.toDouble)
+    val out = EcoServices.outgoingEcoServicePerUnit(ncm, nam, scal_exp)
+    EcoServices.incomingEcoServicePerUnit(struct, out)
+
+  def averageEcoServices(
+                          struct: Graph[Long, UnDiEdge],
+                          comp: Map[Long, EcoUnit],
+                          scal_exp: Double,
+                          size: Int
+                        ):
+  Double =
+    val es = ecoServices(struct,comp,scal_exp,size)
+    es.values.sum / es.size.toDouble
+
 end EcoServices
 
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
- /** def averageESFlow(
-    eco: Graph[EcoUnit,Long],
-    z: Double,
-    size: Int):
-    Double =
-      esGraph(eco,z,size).vertices.reduce{ case ((v, a),(_,b)) => (v, a._2 + b._2) }._2 / size.toDouble 
 
 
-  /**
-  Fraction of natural habitat that needs to be removed with uniform probability to
-  halve average ecosystem service provision
-  */
-  def robustnessESFlowOneReplica(average: Double,
-                                 eco: Graph[EcoUnit,Long],
-                                 z: Double,
-                                 size: Int): Double = {
 
-      val thr: Double = average * 0.5
-      val vid: VertexId = rnd.shuffle( eco.subgraph(vpred = (_,eu) => eu.cover == Natural).vertices.collect() ).take(1)._1
-      val new_eco: Graph[EcoUnit,Long] = eco.mapValues{ case (v,_) if v == vid => (v, Degraded) }
-      val new_avg: Double = averageESFlow(new_eco,z,size)
-      val n: Int = 1
-
-      //@tailrec
-      def rec(thr: Double,
-              current_avg: Double,
-              eco: Graph[EcoUnit,Long],
-              z: Double,
-              size: Int,
-              n: Int): Double = {
-        if(current_avg <= thr) { n }
-        else {
-          val new_n: Int = n + 1
-          val vid: VertexId = rnd.shuffle( eco.subgraph(vpred = (_,eu) => eu.cover == Natural).vertices.collect() ).take(1)._1
-          val new_eco: Graph[EcoUnit,Long] = eco.mapValues{ case (v,_) if v == vid => (v, Degraded) }
-          val new_avg: Double = averageESFlow(new_eco,z,size)
-          rec(thr,new_avg,new_eco,z,size,new_n)
-        }
-      }
-      rec(thr,new_avg,new_eco,z,size,n) / eco.subgraph(vpred = (_,eu) => eu.cover == Natural).vertices.count.toInt
-  }
-
-  def robustnessESFlow(average: Double,
-                       eco: Graph[EcoUnit,Long],
-                       z: Double,
-                       size: Int,
-                       n: Int): Double = {
-    (0 until n).flatMap( _ => robustnessESFlowOneReplica(average,eco,z,size) ).reduce((a,b) => a + b)/n
-  }
 */
 
