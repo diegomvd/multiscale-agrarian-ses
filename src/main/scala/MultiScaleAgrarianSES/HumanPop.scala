@@ -70,10 +70,11 @@ object HumanPop :
 
   def apply(
              resources: Double,
-             s_res: Double
+             s_res: Double,
+             his: Double
            ):
   Int =
-    HumanPop(resources.toInt,s_res)
+    HumanPop(resources.toInt,s_res,his)
   def birth(
              size: Int
            ):
