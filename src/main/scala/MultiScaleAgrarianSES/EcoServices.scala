@@ -1,5 +1,6 @@
 package MultiScaleAgrarianSES
 
+import scala.util.Random as rnd
 import scala.math.pow
 import scala.annotation.tailrec
 import scala.reflect._
@@ -52,25 +53,26 @@ trait EcoServices :
       if currentAvg <= threshold then n.toDouble
       else
         val new_n: Int = n + 1
-        val nId: Long = rnd.shuffle(comp.filter(_._2.matchCover(LandCover.Natural)).keys).take(1)
-        val newComp: Map[Long, Double] = comp.map { case (id, _) if id == nId => (id, EcoUnit(id, LandCover.Degraded)) }
+        val nId: Long = rnd.shuffle(comp.filter(_._2.matchCover(LandCover.Natural)).keys).take(1).head
+        val newComp: Map[Long, EcoUnit] = comp.map { case (id, _) if id == nId => (id, EcoUnit(id, LandCover.Degraded)) }
         val newAverage: Double = EcoServices.averageEcoServices(this.structure, newComp, this.scal_exp, this.size)
-        rec(threshold, newAverage, newComp, this.scal_exp, this.size, new_n)
+        rec(threshold, newAverage, newComp, new_n)
     val threshold: Double = average * 0.5
-    rec(threshold, average, this.composition, this.scal_exp, this.size, 0) / this.composition.count(_._2.matchCover(LandCover.Natural)).toDouble
+    rec(threshold, average, this.composition, 0) / this.composition.count(_._2.matchCover(LandCover.Natural)).toDouble
 
   def robustnessEcoServices(
                              average: Double,
                              n: Int
                            ):
   Double =
-    (0 until n).flatMap(_ => robustnessEcoServicesOneReplica(average)).reduceLeft((a, b) => a + b) / n
+    (0 until n).map(_ => robustnessEcoServicesOneReplica(average)).sum / n.toDouble
 
   def averageAndRobustnessEcoServices(
                                        n: Int
                                      ):
   (Double,Double) =
-    (this.averageEcoServices,this.robustnessEcoServices(n))
+    val avg : Double = this.averageEcoServices
+    (avg,this.robustnessEcoServices(avg,n))
 
 object EcoServices :
 
@@ -176,12 +178,4 @@ object EcoServices :
 
 end EcoServices
 
-
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-
-
-*/
 

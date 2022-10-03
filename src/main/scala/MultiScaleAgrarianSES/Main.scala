@@ -11,12 +11,13 @@ object Main:
    * */
   def main(
             sim: Simulation,
-            simulationType: String
+            simulationType: String,
+            n: Int
           ):
   (Double,Double,Int) =
     simulationType match
-      case "static" => sim.runInitialization.outputStaticLandscapeOptimization
-      case "dynamic" => sim.runSocioEcoDynamics.outputStaticLandscapeOptimization
+      case "static" => sim.runInitialization.outputStaticLandscapeOptimization(n)
+      case "dynamic" => sim.runSocioEcoDynamics.outputStaticLandscapeOptimization(n)
 
   def parameters(
                   maximumSimulationTime: Double = 0.0,

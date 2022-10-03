@@ -44,8 +44,8 @@ class Simulation(
       this.fractionOfMngUnitsSparing
     )
     val ecoLandscape = initEco.initialize(
-      this.plnLandscape,
-      this.mngLandscape,
+      plnLandscape,
+      mngLandscape,
       this.initFractionAgricultural,
       this.initFractionDegraded
     )

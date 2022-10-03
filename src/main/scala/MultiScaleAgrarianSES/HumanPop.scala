@@ -73,8 +73,8 @@ object HumanPop :
              s_res: Double,
              his: Double
            ):
-  Int =
-    HumanPop(resources.toInt,s_res,his)
+  HumanPop =
+    HumanPop(resources.toInt, s_res, his)
   def birth(
              size: Int
            ):
