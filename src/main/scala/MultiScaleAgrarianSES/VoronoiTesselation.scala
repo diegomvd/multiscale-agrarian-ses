@@ -13,8 +13,8 @@ import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
  * neighborhood between units.
 */
 trait VoronoiTesselation extends SpatialStochasticEvents:
-
-  val composition: Map[Long,LandscapeUnit]
+  type A <: LandscapeUnit
+  val composition: Map[Long,A]
   val structure: Graph[Long,UnDiEdge]
 
   /**
@@ -78,8 +78,7 @@ trait VoronoiTesselation extends SpatialStochasticEvents:
         val x_rnd: Double = rnd.between(0.0, cum_prob.last._2)
         val pos = selectUnitId( x_rnd, cum_prob )
         val pol = VoronoiTesselation.selectGrowingPolygon( pos, assigned, this.structure )
-
-        val new_graph = assigned.map{ case (id,_) if id == pos => (id,pol) }
+        val new_graph = assigned.map( v => if v._1 == pos then (v._1,pol) else v )
         rec(new_graph)
       }
 
@@ -103,13 +102,17 @@ object VoronoiTesselation:
   ListMap[Long,Double] =
     ListMap(
       assigned.map{
-        case (id,poly) if poly != -1L => // If the polygon is not colonized yet
-          val neighbors = (structure get id).neighbors
-          (id,neighbors.count(n => n.toOuter != -1L).toDouble/neighbors.size.toDouble) // Count the number of colonized neighbors
-      }
+        v =>
+          if v._2 == -1L // If the polygon is not colonized yet
+          then {
+            val neighbors = (structure get v._1).neighbors
+            (v._1, neighbors.count(n => assigned.getOrElse(n.toOuter,-1L) != -1L).toDouble / neighbors.size.toDouble) // Count the number of colonized neighbors
+          }
+          else (v._1,0.0)
+      } .filter(_._2>0.0)
         .toSeq.sortWith(_._2>_._2):_* // sorting from largest probability to smallest to speed up selection in average
     )
-      .scanLeft((-1L,0.0))( (pre,now) => (now._1, pre._2 + now._2)).to(ListMap)
+      .scanLeft((-1L,0.0))( (pre,now) => (now._1, pre._2 + now._2)).tail.to(ListMap)
 
 
   /**
@@ -145,6 +148,9 @@ object VoronoiTesselation:
         (struct get id).neighbors.filter(
           n => comp.getOrElse(n.toOuter,-1L) != -1L
         )
-      ).take(1).head.toOuter
+      ) .take(1)
+        .head
+        .toOuter
+
 
 end VoronoiTesselation

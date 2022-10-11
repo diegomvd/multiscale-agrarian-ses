@@ -30,7 +30,8 @@ case class MngUnit(
                    eco: Map[Long,EcoUnit]
                  ):
   Boolean =
-    PlnLandscape.subLandscape(pln,this.composition).exists(_._2.isAvailable(eco))
+    val subLandscape = PlnLandscape.subLandscape(pln,this.composition)
+    subLandscape.exists(_._2.isAvailable(eco))
 
   /**
   Calculates the conversion propensity for each of the PlnUnits belonging to this MngUnit given this MngUnit's conversion
@@ -60,7 +61,7 @@ case class MngUnit(
     // Cumulative sum starting with the initial value and yielding the cumulative propensities scaled to the rest of the world's propensities
     prop.scanLeft[(Long,Double)]((-1L,i_val)){
       (pre, now) => (now._1, now._2 + pre._2)
-    }.to(ListMap)
+    }.tail.to(ListMap)
 
 object MngUnit :
 

@@ -21,6 +21,7 @@ case class MngLandscape(
                          n_sparing: Int,
                          size: Int)
   extends TopLandscape with SpatialStochasticEvents:
+  type A = MngUnit
   /**
    * Calculates the propensity of choosing each MngUnit for agricultural expansion.
    * @param ival initial value for the cumulative sum of conversion propensities in each MngUnit
@@ -35,7 +36,7 @@ case class MngLandscape(
                           ):
   ListMap[Long,Double] =
     val propensities: Map[Long,Double] = MngLandscape.probabilities(this.composition,pln,eco)
-    propensities.scanLeft((-1L, i_val))( (pre, now) => (now._1, now._2 + pre._2)).to(ListMap)
+    propensities.scanLeft((-1L, i_val))( (pre, now) => (now._1, now._2 + pre._2)).tail.to(ListMap)
 
 object MngLandscape :
   /**

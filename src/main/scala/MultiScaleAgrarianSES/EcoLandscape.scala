@@ -40,6 +40,7 @@ case class EcoLandscape(
                          s_flo: Double)
   extends BaseLandscape with Agriculture with EcoServices with SpontaneousPropensities with SpatialStochasticEvents :
 
+    type A = EcoUnit
     /**
      * Updates land cover in multiple units following a conversion event.
      * @param old_units is a collection of VertexIDs to be updated in cover
@@ -207,17 +208,19 @@ object EcoLandscape :
       val res = eco.resolveConversionEvent(x_rnd,0.0,pln,mng,1.0)
       eco.update(res._1,res._2)
 
-    // TODO: it remains to be decided if using selection, and thus propensity calculation over ids or units themselves
-    //  the spontaneous propensities page needs to be updated if this is ever done on the units and the functions should
-    //  take LandscapeUnits as arguments if this ever works
     def initializeDegradedUnit(
                                 eco: EcoLandscape
                               ):
     EcoLandscape =
       val propensity: ListMap[Long,Double] =  SpontaneousPropensities.propensity(0.0, eco.composition, eco.ecoServices, 1.0, LandCover.Natural, EcoUnit.decreasingPES)
-      val x_rnd: Double = rnd.between(0.0,propensity.last._2)
-      val ecoId = eco.selectUnitId(x_rnd,propensity)
-      eco.update(ecoId, EcoUnit(ecoId, LandCover.Degraded))
+      val upper_bound = propensity.last._2
+      if upper_bound > 0.0 then
+        val x_rnd: Double = rnd.between(0.0,propensity.last._2)
+        val ecoId = eco.selectUnitId(x_rnd, propensity)
+        eco.update(ecoId, EcoUnit(ecoId, LandCover.Degraded))
+      else
+        val ecoId = rnd.nextInt(eco.size)
+        eco.update(ecoId, EcoUnit(ecoId, LandCover.Degraded))
 
     /**
     @param n is a tuple with the number of remaining agricultural units to put first and the remaining degraded units second
@@ -232,7 +235,8 @@ object EcoLandscape :
                        ):
     (Int,Int) =
       transition match
-        case EventType.Conversion => val upd_n_deg = n._2
+        case EventType.Conversion =>
+          val upd_n_deg = n._2
           if n._1>0 then {
             val upd_n_agr = n._1 - step
             (upd_n_agr,upd_n_deg)
@@ -241,13 +245,14 @@ object EcoLandscape :
             val upd_n_agr = n._1
             (upd_n_agr,upd_n_deg)
           }
-        case EventType.Degradation => val upd_n_agr = n._1
+        case EventType.Degradation =>
+          val upd_n_agr = n._1
           if n._2>0 then {
             val upd_n_deg = n._2 - step
             (upd_n_agr,upd_n_deg)
           }
           else {
-            val upd_n_deg = n._1
+            val upd_n_deg = n._2
             (upd_n_agr, upd_n_deg)
           }
         case _ => 
@@ -264,26 +269,26 @@ object EcoLandscape :
            ):
     EcoLandscape =
       val n: Int = n_agr + n_deg
+     // println("remaining conversions = " + n)
       if n==0 then eco
       else {
-        rnd.nextInt(n) match 
-          case n_rnd if n_rnd<n_agr =>  // Conversion transition is chosen
-            val old_agr: Int = eco.countAgricultural
-            val upd_eco: EcoLandscape = initializeAgriculturalUnit(eco, pln, mng)
-            val new_agr: Int = upd_eco.countAgricultural
-            val step: Int = new_agr - old_agr
-            val n_remaining: (Int,Int) = updateRemaining((n_agr,n_deg),EventType.Conversion,step)
-            rec(upd_eco, pln, mng, n_remaining._1, n_remaining._2)
-
-          case n_rnd if n_rnd<n_deg =>  // Degradation transition is chosen
-            val upd_eco = initializeDegradedUnit(eco)
-            val n_remaining: (Int,Int) = updateRemaining((n_agr,n_deg),EventType.Degradation,1)
-            rec(upd_eco, pln, mng, n_remaining._1, n_remaining._2)
+        val n_rnd = rnd.nextInt(n)
+        if n_rnd < n_agr then {
+          val old_agr: Int = eco.countAgricultural
+          val upd_eco: EcoLandscape = initializeAgriculturalUnit(eco, pln, mng)
+          val new_agr: Int = upd_eco.countAgricultural
+          val step: Int = new_agr - old_agr
+          val n_remaining: (Int, Int) = updateRemaining((n_agr, n_deg), EventType.Conversion, step)
+          rec(upd_eco, pln, mng, n_remaining._1, n_remaining._2)
+        } else {
+          val upd_eco = initializeDegradedUnit(eco)
+          val n_remaining: (Int, Int) = updateRemaining((n_agr, n_deg), EventType.Degradation, 1)
+          rec(upd_eco, pln, mng, n_remaining._1, n_remaining._2)
+        }
       }
-      
 
-    val n_agr: Int = eco.size * f_agr.toInt
-    val n_deg: Int = eco.size * f_deg.toInt
+    val n_agr: Int = (eco.size * f_agr).toInt
+    val n_deg: Int = (eco.size * f_deg).toInt
     rec(eco, pln, mng, n_agr, n_deg)
           
 end EcoLandscape

@@ -23,7 +23,7 @@ case class PlnLandscape(
                          size: Int
                        )
   extends TopLandscape with BaseLandscape with SpatialStochasticEvents:
-
+    type A = PlnUnit
     /**
      * Calculates the number of available neighbors of each PlnUnit in the selected MngUnit. Used to determine the
      * PlnUnits conversion weights in a land-sharing MngUnit.
@@ -64,7 +64,7 @@ case class PlnLandscape(
                       mng_unit: Vector[Long]
                     ):
     Map[Long,PlnUnit] =
-      this.composition.filter( mng_unit.contains(_) )
+      this.composition.filter(c => mng_unit.contains(c._1))
 
 object PlnLandscape :
   /**
@@ -128,6 +128,6 @@ object PlnLandscape :
                     mng_unit: Vector[Long]
                   ):
   Map[Long, PlnUnit] =
-    composition.filter(mng_unit.contains(_))
+    composition.filter(c => mng_unit.contains(c._1))
 
 end PlnLandscape

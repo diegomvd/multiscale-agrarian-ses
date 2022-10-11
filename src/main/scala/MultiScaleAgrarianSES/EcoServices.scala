@@ -54,7 +54,7 @@ trait EcoServices :
       else
         val new_n: Int = n + 1
         val nId: Long = rnd.shuffle(comp.filter(_._2.matchCover(LandCover.Natural)).keys).take(1).head
-        val newComp: Map[Long, EcoUnit] = comp.map { case (id, _) if id == nId => (id, EcoUnit(id, LandCover.Degraded)) }
+        val newComp: Map[Long, EcoUnit] = comp.map { v => if v._1 == nId then (v._1, EcoUnit(nId, LandCover.Degraded)) else v }
         val newAverage: Double = EcoServices.averageEcoServices(this.structure, newComp, this.scal_exp, this.size)
         rec(threshold, newAverage, newComp, new_n)
     val threshold: Double = average * 0.5
