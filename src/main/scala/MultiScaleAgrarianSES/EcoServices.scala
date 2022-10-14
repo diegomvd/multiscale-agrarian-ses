@@ -16,15 +16,20 @@ trait EcoServices :
 
   val size: Int
   val scal_exp: Double
+  val scale_max: Double
   val composition: Map[Long,EcoUnit]
   val structure: Graph[Long,UnDiEdge]
+
+  def areaMax:
+  Double =
+    this.size.toDouble/this.scale_max
 
   /**
    * @return a map with the EcoUnit as key and their incoming ES flow as value
    * */
   def ecoServices:
   Map[Long, Double]  =
-    EcoServices.ecoServices(this.structure,this.composition,this.scal_exp,this.size)
+    EcoServices.ecoServices(this.structure,this.composition,this.scal_exp,this.size,this.areaMax)
 
   /**
    *  @return the set of disconnected natural connected components
@@ -55,7 +60,7 @@ trait EcoServices :
         val new_n: Int = n + 1
         val nId: Long = rnd.shuffle(comp.filter(_._2.matchCover(LandCover.Natural)).keys).take(1).head
         val newComp: Map[Long, EcoUnit] = comp.map { v => if v._1 == nId then (v._1, EcoUnit(nId, LandCover.Degraded)) else v }
-        val newAverage: Double = EcoServices.averageEcoServices(this.structure, newComp, this.scal_exp, this.size)
+        val newAverage: Double = EcoServices.averageEcoServices(this.structure, newComp, this.scal_exp, this.size, this.areaMax)
         rec(threshold, newAverage, newComp, new_n)
     val threshold: Double = average * 0.5
     rec(threshold, average, this.composition, 0) / this.composition.count(_._2.matchCover(LandCover.Natural)).toDouble
@@ -122,19 +127,21 @@ object EcoServices :
    */
   def esAreaRelation(
                       a: Double,
-                      z: Double
+                      z: Double,
+                      a_max: Double
                     ):
   Double =
-    pow(a, z)
+    if a > a_max then 1.0 else pow(a, z)
 
   def outgoingEcoServicePerUnit(
                                  ncm: Map[Long,Long],
                                  nam: Map[Long,Double],
-                                 scaling_exp: Double
+                                 scaling_exp: Double,
+                                 a_max: Double
                                ):
   Map[Long, Double] =
     ncm.map{
-      case (node, nccId) => (node, esAreaRelation( nam.getOrElse(nccId, 0.0), scaling_exp) )
+      case (node, nccId) => (node, esAreaRelation( nam.getOrElse(nccId, 0.0), scaling_exp,a_max) )
     }
 
   /**
@@ -157,23 +164,25 @@ object EcoServices :
                    struct: Graph[Long,UnDiEdge],
                    comp: Map[Long,EcoUnit],
                    scal_exp: Double,
-                   size: Int
+                   size: Int,
+                   a_max: Double
                  ):
   Map[Long,Double] =
     val ncc = EcoServices.naturalConnectedComponents(struct, comp)
     val ncm = EcoServices.nodeComponentMembership(ncc)
     val nam = EcoServices.nccNormalizedAreaMap(ncc, size.toDouble)
-    val out = EcoServices.outgoingEcoServicePerUnit(ncm, nam, scal_exp)
+    val out = EcoServices.outgoingEcoServicePerUnit(ncm, nam, scal_exp, a_max)
     EcoServices.incomingEcoServicePerUnit(struct, out)
 
   def averageEcoServices(
                           struct: Graph[Long, UnDiEdge],
                           comp: Map[Long, EcoUnit],
                           scal_exp: Double,
-                          size: Int
+                          size: Int,
+                          a_max: Double
                         ):
   Double =
-    val es = ecoServices(struct,comp,scal_exp,size)
+    val es = ecoServices(struct,comp,scal_exp,size,a_max)
     es.values.sum / es.size.toDouble
 
 end EcoServices

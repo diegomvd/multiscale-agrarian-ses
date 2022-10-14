@@ -25,9 +25,10 @@ object Main extends App:
 
   def parameters(
                   maximumSimulationTime: Double = 0.0,
-                  ecoLandscapeRadius: Int = 60,
+                  ecoLandscapeRadius: Int = 30,
                   ecoConnectivityRange: Int = 1,
                   ecoServicesScalingExp: Double = 0.25,
+                  ecoServicesScaleMax: Double = 0.25,
                   yEcoService: Double = 0.5,
                   sensRecovery: Double = 1.0,
                   sensDegradation: Double = 1.0,
@@ -46,6 +47,7 @@ object Main extends App:
       ecoLandscapeRadius,
       ecoConnectivityRange,
       ecoServicesScalingExp,
+      ecoServicesScaleMax,
       yEcoService,
       sensRecovery,
       sensDegradation,

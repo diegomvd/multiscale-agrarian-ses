@@ -34,6 +34,7 @@ case class EcoLandscape(
                          size: Int,
                          ecr: Int,
                          scal_exp: Double,
+                         scale_max: Double,
                          yes: Double,
                          s_rec: Double,
                          s_deg: Double,
@@ -146,6 +147,7 @@ object EcoLandscape :
              r: Int,
              ecr: Int,
              scal_exp: Double,
+             scale_max: Double,
              yes: Double,
              s_rec: Double,
              s_deg: Double,
@@ -154,7 +156,7 @@ object EcoLandscape :
   EcoLandscape =
     val comp = buildComposition(r)
     val struct = buildStructure(r,comp,ecr)
-    EcoLandscape(comp,struct,ModCo.area(r),ecr,scal_exp,yes,s_rec,s_deg,s_flo)
+    EcoLandscape(comp,struct,ModCo.area(r),ecr,scal_exp,scale_max,yes,s_rec,s_deg,s_flo)
 
   /**
   @param r is the radius of the biophysical landscape
