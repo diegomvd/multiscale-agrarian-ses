@@ -2,10 +2,12 @@ package MultiScaleAgrarianSES
 
 import scala.math.pow
 import scala.math.max
-import scala.util.Random as rnd
 import scalax.collection.Graph
-import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
-import scalax.collection.GraphTraversal._
+import scalax.collection.GraphPredef.*
+import scalax.collection.GraphEdge.*
+import scalax.collection.GraphTraversal.*
+
+import scala.util.Random
 
 /**
 Implementation of the Planning Landscape. A PlnLandscape is on the top of an EcoLandscape and at the base of a
@@ -77,10 +79,11 @@ object PlnLandscape :
   */
   def buildCompositionAndStructure(
                                     nu: Int,
-                                    eco: EcoLandscape
+                                    eco: EcoLandscape,
+                                    rnd: Random
                                   ):
   (Map[Long,PlnUnit], Graph[Long,UnDiEdge]) =
-    val (compInit, struct): (Map[Long,Vector[Long]], Graph[Long,UnDiEdge]) = eco.tesselate(nu)
+    val (compInit, struct): (Map[Long,Vector[Long]], Graph[Long,UnDiEdge]) = eco.tesselate(nu,rnd)
     (compInit.map{case (id,vec) => (id,PlnUnit(id,vec))}, struct)
 
   /**
@@ -93,12 +96,13 @@ object PlnLandscape :
   def apply(
              r: Int,
              unitRadius: Int,
-             eco: EcoLandscape
+             eco: EcoLandscape,
+             rnd: Random
            ):
   PlnLandscape =
     val adjacencyNeighborhoodEcoLandscape: EcoLandscape = eco.copy(structure = EcoLandscape.buildStructure(r,eco.composition,1))
     val nu = TopLandscape.numberOfUnits(unitRadius,adjacencyNeighborhoodEcoLandscape.size)
-    val (comp,struct) = buildCompositionAndStructure(nu,adjacencyNeighborhoodEcoLandscape)
+    val (comp,struct) = buildCompositionAndStructure(nu,adjacencyNeighborhoodEcoLandscape,rnd)
     PlnLandscape(comp,struct,unitRadius,nu)
 
   /**

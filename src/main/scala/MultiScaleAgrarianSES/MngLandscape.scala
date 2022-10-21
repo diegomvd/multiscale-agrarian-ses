@@ -1,7 +1,7 @@
 package MultiScaleAgrarianSES
 
 import scala.collection.immutable.ListMap
-import scala.util.Random as rnd
+import scala.util.Random
 import scala.reflect._
 import scalax.collection.Graph
 import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
@@ -52,11 +52,12 @@ object MngLandscape :
   def apply(
              unitRadius: Int,
              pln: PlnLandscape,
-             fs: Double
+             fs: Double,
+             rnd: Random
            ):
   MngLandscape =
     val nm = TopLandscape.numberOfUnits(unitRadius,pln.unitRadius,pln.size)
-    val (compInit, struct): (Map[Long,Vector[Long]], Graph[Long,UnDiEdge]) = pln.tesselate(nm)
+    val (compInit, struct): (Map[Long,Vector[Long]], Graph[Long,UnDiEdge]) = pln.tesselate(nm,rnd)
     val n_sparing = fs * nm
     val sparing_ids: Vector[Long] = rnd.shuffle(compInit.keys).take( (fs * n_sparing).toInt ).toVector
     val comp = compInit.map{

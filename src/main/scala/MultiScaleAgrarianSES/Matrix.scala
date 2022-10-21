@@ -3,7 +3,7 @@ package MultiScaleAgrarianSES
 import scala.annotation.tailrec
 import scala.collection.immutable.ListMap
 import scala.math.log
-import scala.util.Random as rnd
+import scala.util.Random
 import scalax.collection.Graph
 import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
 
@@ -48,7 +48,8 @@ case class Matrix(
    * @return the state of the Matrix at the end of the simulation.
   */
   def simulate(
-                maxT: Double
+                maxT: Double,
+                rnd: Random
               ):
   Matrix =
 
@@ -72,7 +73,7 @@ case class Matrix(
              res: Double,
              popP: (Double,Double),
              spontP: ((ListMap[Long, Double], ListMap[Long, Double], ListMap[Long, Double], ListMap[Long, Double]), Double),
-             tcP: Double
+             tcP: Double,
            ):
     Matrix =
       // return the current state of the Matrix if the simulation is to stop
@@ -80,7 +81,7 @@ case class Matrix(
       else {
         // get the new world and in function of the event type actualize
         // propensities and/or ecosystem services or not
-        val (new_world, event): (Matrix, EventType) = Matrix.update(popP,spontP,tcP,world)
+        val (new_world, event): (Matrix, EventType) = Matrix.update(popP,spontP,tcP,world,rnd)
         // match the event type
         event match {
           case EventType.Demographic =>  // only the population and conversion propensities are updated
@@ -114,10 +115,13 @@ case class Matrix(
     rec(this, maxT, es, res, popP, spontP, tcP)
 
   def outputStaticLandscapeOptimization(
-                                         n: Int
+                                         n: Int,
+                                         rnd: Random
                                        ):
   (Double,Double,Int) =
-    val (avg,rob) = this.eco.averageAndRobustnessEcoServices(n)
+    println("Calculating ES average and robustness...")
+    val (avg,rob) = this.eco.averageAndRobustnessEcoServices(n,rnd)
+    println("Results:")
     (avg,rob,this.pop.size)
 
 object Matrix :
@@ -152,7 +156,8 @@ object Matrix :
               popP: (Double,Double),
               spontP: ((ListMap[Long, Double], ListMap[Long, Double], ListMap[Long, Double], ListMap[Long, Double]), Double),
               tcP: Double,
-              world: Matrix
+              world: Matrix,
+              rnd: Random
             ):
   (Matrix, EventType) =
     // expression for the next event time

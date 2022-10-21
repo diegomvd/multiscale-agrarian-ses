@@ -3,7 +3,7 @@ package MultiScaleAgrarianSES
 import scala.annotation.tailrec
 import scala.collection.immutable.ListMap
 import scala.math.pow
-import scala.util.Random as rnd
+import scala.util.Random
 
 import scalax.collection.Graph
 import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
@@ -115,10 +115,11 @@ case class EcoLandscape(
                     pln: PlnLandscape,
                     mng: MngLandscape,
                     f_agr: Double,
-                    f_deg: Double
+                    f_deg: Double,
+                    rnd: Random
                   ):
     EcoLandscape =
-      EcoLandscape.initialize(this,pln,mng,f_agr,f_deg)
+      EcoLandscape.initialize(this,pln,mng,f_agr,f_deg,rnd)
 
     def countNatural: Int = this.composition.count{ case (_,u) => u.matchCover(LandCover.Natural) }
     def countDegraded: Int = this.composition.count{ case (_,u) => u.matchCover(LandCover.Degraded) }
@@ -194,7 +195,8 @@ object EcoLandscape :
                   pln: PlnLandscape,
                   mng: MngLandscape,
                   f_agr: Double,
-                  f_deg: Double
+                  f_deg: Double,
+                  rnd: Random
                 ):
   EcoLandscape =
     /**
@@ -272,7 +274,7 @@ object EcoLandscape :
     EcoLandscape =
       val n: Int = n_agr + n_deg
      // println("remaining conversions = " + n)
-      if n==0 then eco
+      if n<=0 then eco
       else {
         val n_rnd = rnd.nextInt(n)
         if n_rnd < n_agr then {
@@ -288,7 +290,6 @@ object EcoLandscape :
           rec(upd_eco, pln, mng, n_remaining._1, n_remaining._2)
         }
       }
-
     val n_agr: Int = (eco.size * f_agr).toInt
     val n_deg: Int = (eco.size * f_deg).toInt
     rec(eco, pln, mng, n_agr, n_deg)

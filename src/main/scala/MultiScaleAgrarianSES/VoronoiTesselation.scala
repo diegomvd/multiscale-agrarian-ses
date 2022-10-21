@@ -2,7 +2,7 @@ package MultiScaleAgrarianSES
 
 import scala.collection.immutable.ListMap
 import scala.annotation.tailrec
-import scala.util.Random as rnd
+import scala.util.Random
 import scalax.collection.Graph
 import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
 
@@ -26,7 +26,8 @@ trait VoronoiTesselation extends SpatialStochasticEvents:
    * @return a seeded graph where vertex attribute is VertexId of seeds in the base landscape.
    */
   def seeded(
-              n_seeds: Int
+              n_seeds: Int,
+              rnd: Random
             ):
   Map[Long, Long] = //the id of the base unit, the polygon id
     val seeds: Seq[Long] =
@@ -61,7 +62,8 @@ trait VoronoiTesselation extends SpatialStochasticEvents:
    *         VertexIds.
    * */
   def tesselate(
-                 n_seeds: Int
+                 n_seeds: Int,
+                 rnd: Random
                ):
   (Map[Long, Vector[Long]], Graph[Long, UnDiEdge]) =
 
@@ -77,12 +79,12 @@ trait VoronoiTesselation extends SpatialStochasticEvents:
         val cum_prob = VoronoiTesselation.cumulativeProbabilities(assigned, this.structure)
         val x_rnd: Double = rnd.between(0.0, cum_prob.last._2)
         val pos = selectUnitId( x_rnd, cum_prob )
-        val pol = VoronoiTesselation.selectGrowingPolygon( pos, assigned, this.structure )
+        val pol = VoronoiTesselation.selectGrowingPolygon( pos, assigned, this.structure, rnd )
         val new_graph = assigned.map( v => if v._1 == pos then (v._1,pol) else v )
         rec(new_graph)
       }
 
-    val seeded = this.seeded(n_seeds)
+    val seeded = this.seeded(n_seeds,rnd)
     val assigned: Map[Long, Long] = rec(seeded)
     val nodes: Map[Long, Vector[Long]] = VoronoiTesselation.groupByPolygon(assigned)
     val edges/*: List[UnDiEdge]*/ = this.newEdges(nodes)
@@ -141,7 +143,8 @@ object VoronoiTesselation:
   def selectGrowingPolygon(
                             id: Long,
                             comp: Map[Long, Long],
-                            struct: Graph[Long,UnDiEdge]
+                            struct: Graph[Long,UnDiEdge],
+                            rnd: Random
                           ):
   Long =
       rnd.shuffle(

@@ -1,5 +1,7 @@
 package MultiScaleAgrarianSES
 
+import scala.util.Random
+
 case class Simulation(
                   maximumSimulationTime: Double,
                   ecoLandscapeRadius: Int,
@@ -16,12 +18,13 @@ case class Simulation(
                   nHouseholdsSupportedPerHiIntUnit: Double,
                   fractionOfMngUnitsSparing: Double,
                   initFractionAgricultural: Double,
-                  initFractionDegraded: Double
+                  initFractionDegraded: Double,
+                  random: Random
                 ):
 
-  def runSocioEcoDynamics:
+  def runSocioEcoDynamics(rnd:Random):
   Matrix =
-    runInitialization.simulate(this.maximumSimulationTime)
+    runInitialization.simulate(this.maximumSimulationTime,rnd)
 
   def runInitialization:
   Matrix =
@@ -40,20 +43,23 @@ case class Simulation(
     val plnLandscape = PlnLandscape(
       this.ecoLandscapeRadius,
       this.planningRadius,
-      initEco
+      initEco,
+      this.random
     )
     println("Creating management landscape... ")
     val mngLandscape = MngLandscape(
       this.managementRadius,
       plnLandscape,
-      this.fractionOfMngUnitsSparing
+      this.fractionOfMngUnitsSparing,
+      this.random
     )
     println("Initializing ecological composition... ")
     val ecoLandscape = initEco.initialize(
       plnLandscape,
       mngLandscape,
       this.initFractionAgricultural,
-      this.initFractionDegraded
+      this.initFractionDegraded,
+      this.random
     )
     println("Initializing human population at equilibrium with resources... ")
     val humanPop = HumanPop(
@@ -85,7 +91,8 @@ object Simulation:
              nHouseholdsSupportedPerHiIntUnit: Double,
              fractionOfMngUnitsSparing: Double,
              initFractionAgricultural: Double,
-             initFractionDegraded: Double
+             initFractionDegraded: Double,
+             seed: Long
            ):
   Simulation =
     Simulation(
@@ -104,7 +111,8 @@ object Simulation:
       nHouseholdsSupportedPerHiIntUnit,
       fractionOfMngUnitsSparing,
       initFractionAgricultural,
-      initFractionDegraded
+      initFractionDegraded,
+      Random(seed)
     )
 
 end Simulation

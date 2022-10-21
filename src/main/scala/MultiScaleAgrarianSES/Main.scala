@@ -1,5 +1,6 @@
 package MultiScaleAgrarianSES
 import scala.math.pow
+import scala.util.Random
 /**
  * Still need to write the output function that selects outputs from a Matrix Instance
  * */
@@ -20,12 +21,16 @@ object Main extends App:
           ):
   (Double,Double,Int) =
     simulationType match
-      case "static" => sim.runInitialization.outputStaticLandscapeOptimization(n)
-      case "dynamic" => sim.runSocioEcoDynamics.outputStaticLandscapeOptimization(n)
+      case "static" =>
+        println("Preparing static landscape configuration simulation...")
+        sim.runInitialization.outputStaticLandscapeOptimization(n,sim.random)
+      case "dynamic" =>
+        println("Preparing social-ecological dynamics simulation...")
+        sim.runSocioEcoDynamics(sim.random).outputStaticLandscapeOptimization(n,sim.random)
 
   def parameters(
                   maximumSimulationTime: Double = 0.0,
-                  ecoLandscapeRadius: Int = 30,
+                  ecoLandscapeRadius: Int = 10,
                   ecoConnectivityRange: Int = 1,
                   ecoServicesScalingExp: Double = 0.25,
                   ecoServicesMaxRadius: Int = 30,
@@ -39,7 +44,8 @@ object Main extends App:
                   nHouseholdsSupportedPerHiIntUnit: Double = 10.0,
                   fractionOfMngUnitsSparing: Double = 0.5,
                   initFractionAgricultural: Double = 0.2,
-                  initFractionDegraded: Double = 0.1
+                  initFractionDegraded: Double = 0.1,
+                  seed: Long = 1L
                 ):
   Simulation =
     new Simulation(
@@ -58,7 +64,8 @@ object Main extends App:
       nHouseholdsSupportedPerHiIntUnit,
       fractionOfMngUnitsSparing,
       initFractionAgricultural,
-      initFractionDegraded
+      initFractionDegraded,
+      Random(seed)
     )
 
   def time[R](block: => R): R = {

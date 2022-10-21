@@ -1,6 +1,6 @@
 package MultiScaleAgrarianSES
 
-import scala.util.Random as rnd
+import scala.util.Random
 import scala.math.pow
 import scala.annotation.tailrec
 import scala.reflect._
@@ -45,6 +45,7 @@ trait EcoServices :
 
   def robustnessEcoServicesOneReplica(
                                        average: Double,
+                                       rnd: Random
                                      ):
   Double =
     @tailrec
@@ -67,17 +68,19 @@ trait EcoServices :
 
   def robustnessEcoServices(
                              average: Double,
-                             n: Int
+                             n: Int,
+                             rnd: Random
                            ):
   Double =
-    (0 until n).map(_ => robustnessEcoServicesOneReplica(average)).sum / n.toDouble
+    (0 until n).map(_ => robustnessEcoServicesOneReplica(average,rnd)).sum / n.toDouble
 
   def averageAndRobustnessEcoServices(
-                                       n: Int
+                                       n: Int,
+                                       rnd: Random
                                      ):
   (Double,Double) =
     val avg : Double = this.averageEcoServices
-    (avg,this.robustnessEcoServices(avg,n))
+    (avg,this.robustnessEcoServices(avg,n,rnd))
 
 object EcoServices :
 
