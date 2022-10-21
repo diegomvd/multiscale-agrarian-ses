@@ -19,7 +19,7 @@ MngLandscape. It is composed by a collection of PlnUnits.
 case class PlnLandscape(
                          composition: Map[Long,PlnUnit],
                          structure: Graph[Long,UnDiEdge],
-                         scale: Double,
+                         unitRadius: Int,
                          size: Int
                        )
   extends TopLandscape with BaseLandscape with SpatialStochasticEvents:
@@ -92,14 +92,14 @@ object PlnLandscape :
    * */
   def apply(
              r: Int,
-             scale: Double,
+             unitRadius: Int,
              eco: EcoLandscape
            ):
   PlnLandscape =
     val adjacencyNeighborhoodEcoLandscape: EcoLandscape = eco.copy(structure = EcoLandscape.buildStructure(r,eco.composition,1))
-    val nu = TopLandscape.numberOfUnits(scale,adjacencyNeighborhoodEcoLandscape.size)
+    val nu = TopLandscape.numberOfUnits(unitRadius,adjacencyNeighborhoodEcoLandscape.size)
     val (comp,struct) = buildCompositionAndStructure(nu,adjacencyNeighborhoodEcoLandscape)
-    PlnLandscape(comp,struct,scale,nu)
+    PlnLandscape(comp,struct,unitRadius,nu)
 
   /**
    * Determines the un/availability of the neighbors of each PlnUnit in the selected MngUnit.

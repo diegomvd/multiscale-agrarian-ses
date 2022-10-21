@@ -16,13 +16,13 @@ trait EcoServices :
 
   val size: Int
   val scal_exp: Double
-  val scale_max: Double
+  val radius_max: Int
   val composition: Map[Long,EcoUnit]
   val structure: Graph[Long,UnDiEdge]
 
   def areaMax:
   Double =
-    this.size.toDouble/this.scale_max
+    ModCo.area(radius_max).toDouble
 
   /**
    * @return a map with the EcoUnit as key and their incoming ES flow as value

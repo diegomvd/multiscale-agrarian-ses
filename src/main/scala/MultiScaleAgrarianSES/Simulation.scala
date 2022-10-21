@@ -1,17 +1,17 @@
 package MultiScaleAgrarianSES
 
-class Simulation(
+case class Simulation(
                   maximumSimulationTime: Double,
                   ecoLandscapeRadius: Int,
                   ecoConnectivityRange: Int,
                   ecoServicesScalingExp: Double,
-                  ecoServicesScaleMax: Double,
+                  ecoServicesMaxRadius: Int,
                   yEcoService: Double,
                   sensRecovery: Double,
                   sensDegradation: Double,
                   sensFertilityLoss: Double,
-                  planningScale: Double,
-                  managementScale: Double,
+                  planningRadius: Int,
+                  managementRadius: Int,
                   sensResourceDemand: Double,
                   nHouseholdsSupportedPerHiIntUnit: Double,
                   fractionOfMngUnitsSparing: Double,
@@ -30,7 +30,7 @@ class Simulation(
       this.ecoLandscapeRadius,
       this.ecoConnectivityRange,
       this.ecoServicesScalingExp,
-      this.ecoServicesScaleMax,
+      this.ecoServicesMaxRadius,
       this.yEcoService,
       this.sensRecovery,
       this.sensDegradation,
@@ -39,12 +39,12 @@ class Simulation(
     println("Creating planning landscape... ")
     val plnLandscape = PlnLandscape(
       this.ecoLandscapeRadius,
-      this.planningScale,
+      this.planningRadius,
       initEco
     )
     println("Creating management landscape... ")
     val mngLandscape = MngLandscape(
-      this.managementScale,
+      this.managementRadius,
       plnLandscape,
       this.fractionOfMngUnitsSparing
     )
@@ -67,6 +67,44 @@ class Simulation(
       plnLandscape,
       mngLandscape,
       humanPop
+    )
+
+object Simulation:
+
+  /**
+   * Constructor for static landscape optimization
+   * */
+  def apply(
+             ecoLandscapeRadius: Int,
+             ecoConnectivityRange: Int,
+             ecoServicesScalingExp: Double,
+             ecoServicesMaxRadius: Int,
+             yEcoService: Double,
+             planningRadius: Int,
+             managementRadius: Int,
+             nHouseholdsSupportedPerHiIntUnit: Double,
+             fractionOfMngUnitsSparing: Double,
+             initFractionAgricultural: Double,
+             initFractionDegraded: Double
+           ):
+  Simulation =
+    Simulation(
+      maximumSimulationTime = 0.0,
+      ecoLandscapeRadius,
+      ecoConnectivityRange,
+      ecoServicesScalingExp,
+      ecoServicesMaxRadius,
+      yEcoService,
+      sensRecovery = 1.0,
+      sensDegradation = 1.0,
+      sensFertilityLoss = 1.0,
+      planningRadius,
+      managementRadius,
+      sensResourceDemand = 1.0,
+      nHouseholdsSupportedPerHiIntUnit,
+      fractionOfMngUnitsSparing,
+      initFractionAgricultural,
+      initFractionDegraded
     )
 
 end Simulation
