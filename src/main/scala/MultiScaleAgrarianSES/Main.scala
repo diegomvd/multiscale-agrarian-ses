@@ -8,7 +8,7 @@ import scala.util.Random
 object Main extends App:
 
   val simulation = parameters()
-  val res = time { main(simulation,"static",1) }
+  val res = time { main(simulation,"static",2) }
   println(res)
 
   /**
@@ -23,25 +23,25 @@ object Main extends App:
     simulationType match
       case "static" =>
         println("Preparing static landscape configuration simulation...")
-        sim.runInitialization.outputStaticLandscapeOptimization(n,sim.random)
+        sim.runInitialization.outputStaticLandscapeOptimization(n)
       case "dynamic" =>
         println("Preparing social-ecological dynamics simulation...")
-        sim.runSocioEcoDynamics(sim.random).outputStaticLandscapeOptimization(n,sim.random)
+        sim.runSocialEcoDynamics.outputStaticLandscapeOptimization(n)
 
   def parameters(
                   maximumSimulationTime: Double = 0.0,
-                  ecoLandscapeRadius: Int = 10,
-                  ecoConnectivityRange: Int = 1,
+                  ecoLandscapeRadius: Int = 30,
+                  ecoConnectivityArea: Double = 0.007,
                   ecoServicesScalingExp: Double = 0.25,
-                  ecoServicesMaxRadius: Int = 30,
+                  ecoServicesMaxArea: Double = 0.5,
                   yEcoService: Double = 0.5,
                   sensRecovery: Double = 1.0,
                   sensDegradation: Double = 1.0,
                   sensFertilityLoss: Double = 1.0,
-                  planningRadius: Int = 1,
-                  managementRadius: Int = 1,
+                  planningArea: Double = 0.01,
+                  managementArea: Double = 0.1,
                   sensResourceDemand: Double = 1.0,
-                  nHouseholdsSupportedPerHiIntUnit: Double = 10.0,
+                  nHouseholdsSupportedPerHiIntUnit: Double = 1.0,
                   fractionOfMngUnitsSparing: Double = 0.5,
                   initFractionAgricultural: Double = 0.2,
                   initFractionDegraded: Double = 0.1,
@@ -51,15 +51,15 @@ object Main extends App:
     new Simulation(
       maximumSimulationTime,
       ecoLandscapeRadius,
-      ecoConnectivityRange,
+      ecoConnectivityArea,
       ecoServicesScalingExp,
-      ecoServicesMaxRadius,
+      ecoServicesMaxArea,
       yEcoService,
       sensRecovery,
       sensDegradation,
       sensFertilityLoss,
-      planningRadius,
-      managementRadius,
+      planningArea,
+      managementArea,
       sensResourceDemand,
       nHouseholdsSupportedPerHiIntUnit,
       fractionOfMngUnitsSparing,

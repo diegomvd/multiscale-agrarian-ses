@@ -17,7 +17,7 @@ the number of Management Units f the Management Landscape that apply a land-spar
 case class MngLandscape(
                          composition: Map[Long,MngUnit],
                          structure: Graph[Long,UnDiEdge],
-                         unitRadius: Int,
+                         unitArea: Int,
                          n_sparing: Int,
                          size: Int)
   extends TopLandscape with SpatialStochasticEvents:
@@ -50,13 +50,19 @@ object MngLandscape :
    * @todo need to check this function depending on tesselation
    */
   def apply(
-             unitRadius: Int,
+             ecoRadius: Int,
+             unitArea: Double,
              pln: PlnLandscape,
              fs: Double,
              rnd: Random
            ):
   MngLandscape =
-    val nm = TopLandscape.numberOfUnits(unitRadius,pln.unitRadius,pln.size)
+    // Transform relative management area to absolute
+    val unitAreaAbs : Int = (unitArea * ModCo.area(ecoRadius).toDouble).toInt
+
+    val nm = TopLandscape.numberOfUnits(unitAreaAbs,ModCo.area(ecoRadius))
+    if nm > pln.size then println("There are more management units than planning units, tesselation of the planning landscape will yield an error.")
+
     val (compInit, struct): (Map[Long,Vector[Long]], Graph[Long,UnDiEdge]) = pln.tesselate(nm,rnd)
     val n_sparing = fs * nm
     val sparing_ids: Vector[Long] = rnd.shuffle(compInit.keys).take( (fs * n_sparing).toInt ).toVector
@@ -66,7 +72,7 @@ object MngLandscape :
         then (id,MngUnit(id,vec,MngStrategy.LandSparing))
         else (id,MngUnit(id,vec,MngStrategy.LandSparing))
     }
-    MngLandscape(comp,struct,unitRadius,n_sparing.toInt,nm)
+    MngLandscape(comp,struct,unitAreaAbs,n_sparing.toInt,nm)
 
   /**
    *  Calculate the relative probabilities for each MngUnit to be selected for a conversion event.

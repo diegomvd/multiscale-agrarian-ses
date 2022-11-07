@@ -16,20 +16,16 @@ trait EcoServices :
 
   val size: Int
   val scal_exp: Double
-  val radius_max: Int
+  val area_max: Int
   val composition: Map[Long,EcoUnit]
   val structure: Graph[Long,UnDiEdge]
-
-  def areaMax:
-  Double =
-    ModCo.area(radius_max).toDouble
 
   /**
    * @return a map with the EcoUnit as key and their incoming ES flow as value
    * */
   def ecoServices:
   Map[Long, Double]  =
-    EcoServices.ecoServices(this.structure,this.composition,this.scal_exp,this.size,this.areaMax)
+    EcoServices.ecoServices(this.structure,this.composition,this.scal_exp,this.size,area_max.toDouble)
 
   /**
    *  @return the set of disconnected natural connected components
@@ -61,7 +57,7 @@ trait EcoServices :
         val new_n: Int = n + 1
         val nId: Long = rnd.shuffle(comp.filter(_._2.matchCover(LandCover.Natural)).keys).take(1).head
         val newComp: Map[Long, EcoUnit] = comp.map { v => if v._1 == nId then (v._1, EcoUnit(nId, LandCover.Degraded)) else v }
-        val newAverage: Double = EcoServices.averageEcoServices(this.structure, newComp, this.scal_exp, this.size, this.areaMax)
+        val newAverage: Double = EcoServices.averageEcoServices(this.structure, newComp, this.scal_exp, this.size, area_max.toDouble)
         rec(threshold, newAverage, newComp, new_n)
     val threshold: Double = average * 0.5
     rec(threshold, average, this.composition, 0) / this.composition.count(_._2.matchCover(LandCover.Natural)).toDouble

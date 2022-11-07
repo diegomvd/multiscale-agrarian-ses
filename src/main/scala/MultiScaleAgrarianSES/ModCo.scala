@@ -2,6 +2,7 @@ package MultiScaleAgrarianSES
 
 import scala.math.max
 import scala.math.min
+import scala.math.sqrt
 
 /**
  * Implementation of hexagonal modulo coordinates. Defines all the functions needed to manipulate the modulo coordinates
@@ -34,6 +35,12 @@ object ModCo:
           ):
   Int=
     3*r*r + 3*r + 1
+
+  def radius(
+              a: Int
+            ):
+  Int =
+    ( (sqrt(9.0 + 12.0*(a-1.0) ) - 3.0)/6 ).toInt
 
   /**
    * Transforms a modulo coordinate to a cubic coordinate of the hexagonal landscape

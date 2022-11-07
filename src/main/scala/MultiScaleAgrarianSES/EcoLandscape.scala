@@ -34,7 +34,7 @@ case class EcoLandscape(
                          size: Int,
                          ecr: Int,
                          scal_exp: Double,
-                         radius_max: Int,
+                         area_max: Int,
                          yes: Double,
                          s_rec: Double,
                          s_deg: Double,
@@ -146,18 +146,22 @@ object EcoLandscape :
 
   def apply(
              r: Int,
-             ecr: Int,
+             eca: Double,
              scal_exp: Double,
-             radius_max: Int,
+             area_max: Double,
              yes: Double,
              s_rec: Double,
              s_deg: Double,
              s_flo: Double
            ):
   EcoLandscape =
+    // conversion relative area to absolute radius
+    val ecr: Int = ModCo.radius( (eca * ModCo.area(r).toDouble).toInt)
+    val area_max_abs: Int =  (area_max * ModCo.area(r).toDouble).toInt
+
     val comp = buildComposition(r)
     val struct = buildStructure(r,comp,ecr)
-    EcoLandscape(comp,struct,ModCo.area(r),ecr,scal_exp,radius_max,yes,s_rec,s_deg,s_flo)
+    EcoLandscape(comp,struct,ModCo.area(r),ecr,scal_exp,area_max_abs,yes,s_rec,s_deg,s_flo)
 
   /**
   @param r is the radius of the biophysical landscape

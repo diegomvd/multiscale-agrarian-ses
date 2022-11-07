@@ -18,7 +18,8 @@ case class Matrix(
                    eco: EcoLandscape,
                    pln: PlnLandscape,
                    mng: MngLandscape,
-                   pop: HumanPop
+                   pop: HumanPop,
+                   rnd: Random
                  ):
 
   /**
@@ -48,8 +49,7 @@ case class Matrix(
    * @return the state of the Matrix at the end of the simulation.
   */
   def simulate(
-                maxT: Double,
-                rnd: Random
+                maxT: Double
               ):
   Matrix =
 
@@ -81,7 +81,7 @@ case class Matrix(
       else {
         // get the new world and in function of the event type actualize
         // propensities and/or ecosystem services or not
-        val (new_world, event): (Matrix, EventType) = Matrix.update(popP,spontP,tcP,world,rnd)
+        val (new_world, event): (Matrix, EventType) = Matrix.update(popP,spontP,tcP,world,this.rnd)
         // match the event type
         event match {
           case EventType.Demographic =>  // only the population and conversion propensities are updated
@@ -115,12 +115,11 @@ case class Matrix(
     rec(this, maxT, es, res, popP, spontP, tcP)
 
   def outputStaticLandscapeOptimization(
-                                         n: Int,
-                                         rnd: Random
+                                         n: Int
                                        ):
   (Double,Double,Int) =
     println("Calculating ES average and robustness...")
-    val (avg,rob) = this.eco.averageAndRobustnessEcoServices(n,rnd)
+    val (avg,rob) = this.eco.averageAndRobustnessEcoServices(n,this.rnd)
     println("Results:")
     (avg,rob,this.pop.size)
 
@@ -140,10 +139,11 @@ object Matrix :
              eco: EcoLandscape,
              pln: PlnLandscape,
              mng: MngLandscape,
-             pop: HumanPop
+             pop: HumanPop,
+             rnd: Random
            ):
   Matrix =
-    Matrix(0.0,eco,pln,mng,pop)
+    Matrix(0.0,eco,pln,mng,pop,rnd)
 
   /**
    * Updates the Matrix's state by choosing next event time and type from the event propensities.

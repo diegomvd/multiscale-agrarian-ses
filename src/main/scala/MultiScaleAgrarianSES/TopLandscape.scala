@@ -5,27 +5,15 @@ package MultiScaleAgrarianSES
  * for the construction of nested landscapes' hierarchies.
  * */
 trait TopLandscape extends Landscape :
-  val unitRadius: Int
+  val unitArea: Int
 
 object TopLandscape :
   def numberOfUnits(
-                     unitRadius: Int,
-                     baseSize: Int
+                     unitArea: Int,
+                     referenceArea: Int
                    ):
   Int = 
-    (baseSize.toDouble / unitArea(unitRadius).toDouble).toInt
-  def numberOfUnits(
-                     unitRadius:Int,
-                     unitRadiusBase: Int,
-                     baseSize: Int
-                   ):
-  Int = 
-    (baseSize*unitArea(unitRadiusBase).toDouble/unitArea(unitRadius*unitRadiusBase).toDouble).toInt
-  def unitArea(
-                unitRadius: Int
-              ):
-  Int =
-    ModCo.area(unitRadius)
-  
+    (referenceArea.toDouble / unitArea.toDouble).toInt
+
 end TopLandscape
 

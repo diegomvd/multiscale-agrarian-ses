@@ -5,15 +5,15 @@ import scala.util.Random
 case class Simulation(
                   maximumSimulationTime: Double,
                   ecoLandscapeRadius: Int,
-                  ecoConnectivityRange: Int,
+                  ecoConnectivityArea: Double,
                   ecoServicesScalingExp: Double,
-                  ecoServicesMaxRadius: Int,
+                  ecoServicesMaxArea: Double,
                   yEcoService: Double,
                   sensRecovery: Double,
                   sensDegradation: Double,
                   sensFertilityLoss: Double,
-                  planningRadius: Int,
-                  managementRadius: Int,
+                  planningArea: Double,
+                  managementArea: Double,
                   sensResourceDemand: Double,
                   nHouseholdsSupportedPerHiIntUnit: Double,
                   fractionOfMngUnitsSparing: Double,
@@ -22,18 +22,18 @@ case class Simulation(
                   random: Random
                 ):
 
-  def runSocioEcoDynamics(rnd:Random):
+  def runSocialEcoDynamics:
   Matrix =
-    runInitialization.simulate(this.maximumSimulationTime,rnd)
+    runInitialization.simulate(this.maximumSimulationTime)
 
   def runInitialization:
   Matrix =
     println("Building the ecological landscape... ")
     val initEco = EcoLandscape(
       this.ecoLandscapeRadius,
-      this.ecoConnectivityRange,
+      this.ecoConnectivityArea,
       this.ecoServicesScalingExp,
-      this.ecoServicesMaxRadius,
+      this.ecoServicesMaxArea,
       this.yEcoService,
       this.sensRecovery,
       this.sensDegradation,
@@ -42,13 +42,14 @@ case class Simulation(
     println("Creating planning landscape... ")
     val plnLandscape = PlnLandscape(
       this.ecoLandscapeRadius,
-      this.planningRadius,
+      this.planningArea,
       initEco,
       this.random
     )
     println("Creating management landscape... ")
     val mngLandscape = MngLandscape(
-      this.managementRadius,
+      ecoLandscapeRadius,
+      this.managementArea,
       plnLandscape,
       this.fractionOfMngUnitsSparing,
       this.random
@@ -72,7 +73,8 @@ case class Simulation(
       ecoLandscape,
       plnLandscape,
       mngLandscape,
-      humanPop
+      humanPop,
+      this.random
     )
 
 object Simulation:
@@ -82,12 +84,12 @@ object Simulation:
    * */
   def apply(
              ecoLandscapeRadius: Int,
-             ecoConnectivityRange: Int,
+             ecoConnectivityArea: Double,
              ecoServicesScalingExp: Double,
-             ecoServicesMaxRadius: Int,
+             ecoServicesMaxArea: Double,
              yEcoService: Double,
-             planningRadius: Int,
-             managementRadius: Int,
+             planningArea: Double,
+             managementArea: Double,
              nHouseholdsSupportedPerHiIntUnit: Double,
              fractionOfMngUnitsSparing: Double,
              initFractionAgricultural: Double,
@@ -98,15 +100,15 @@ object Simulation:
     Simulation(
       maximumSimulationTime = 0.0,
       ecoLandscapeRadius,
-      ecoConnectivityRange,
+      ecoConnectivityArea,
       ecoServicesScalingExp,
-      ecoServicesMaxRadius,
+      ecoServicesMaxArea,
       yEcoService,
       sensRecovery = 1.0,
       sensDegradation = 1.0,
       sensFertilityLoss = 1.0,
-      planningRadius,
-      managementRadius,
+      planningArea,
+      managementArea,
       sensResourceDemand = 1.0,
       nHouseholdsSupportedPerHiIntUnit,
       fractionOfMngUnitsSparing,
