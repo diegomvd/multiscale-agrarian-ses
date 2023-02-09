@@ -30,7 +30,7 @@ object Main extends App:
 
   def parameters(
                   maximumSimulationTime: Double = 0.0,
-                  ecoLandscapeRadius: Int = 30,
+                  ecoLandscapeRadius: Int = 3,
                   ecoConnectivityArea: Double = 0.007,
                   ecoServicesScalingExp: Double = 0.25,
                   ecoServicesMaxArea: Double = 0.5,

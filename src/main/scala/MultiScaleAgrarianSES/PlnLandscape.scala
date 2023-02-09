@@ -4,8 +4,11 @@ import scala.math.pow
 import scala.math.max
 import scala.util.Random
 
-import org.jgrapht._
-import org.jgrapht.graph._
+import org.jgrapht.*
+import org.jgrapht.alg.util.NeighborCache
+import org.jgrapht.graph.*
+import scala.jdk.CollectionConverters.SetHasAsScala
+
 
 /**
 Implementation of the Planning Landscape. A PlnLandscape is on the top of an EcoLandscape and at the base of a
@@ -19,6 +22,7 @@ MngLandscape. It is composed by a collection of PlnUnits.
 case class PlnLandscape(
                          composition: Map[Long,PlnUnit],
                          structure: Graph[Long,DefaultEdge],
+                         neighborCache: NeighborCache[Long,DefaultEdge],
                          unitArea: Int,
                          size: Int
                        )
@@ -37,7 +41,7 @@ case class PlnLandscape(
                             eco: Map[Long,EcoUnit]
                           ):
     Map[Long, Int] =
-      PlnLandscape.neighborAvailability(this.subLandscape(mng_unit),this.structure,eco,true)
+      PlnLandscape.neighborAvailability(this.subLandscape(mng_unit),this.structure,this.neighborCache,eco,true)
 
     /**
      * Calculates the number of unavailable neighbors of each PlnUnit in the selected MngUnit. Used to determine the
@@ -52,7 +56,7 @@ case class PlnLandscape(
                               eco: Map[Long,EcoUnit]
                             ):
     Map[Long,Int] =
-      PlnLandscape.neighborAvailability(this.subLandscape(mng_unit),this.structure,eco,false)
+      PlnLandscape.neighborAvailability(this.subLandscape(mng_unit),this.structure,this.neighborCache,eco,false)
 
     /**
      * Selects a part of this PlnLandscape corresponding to the composition of a MngUnit.
@@ -104,7 +108,8 @@ object PlnLandscape :
     val adjacencyNeighborhoodEcoLandscape: EcoLandscape = eco.copy(structure = EcoLandscape.buildStructure(r,eco.composition,1))
     val nu = TopLandscape.numberOfUnits(unitAreaAbs,adjacencyNeighborhoodEcoLandscape.size)
     val (comp,struct) = buildCompositionAndStructure(nu,adjacencyNeighborhoodEcoLandscape,rnd)
-    PlnLandscape(comp,struct,unitAreaAbs,nu)
+    val neighborCache: NeighborCache[Long,DefaultEdge] = new NeighborCache[Long,DefaultEdge](struct)
+    PlnLandscape(comp,struct,neighborCache,unitAreaAbs,nu)
 
   /**
    * Determines the un/availability of the neighbors of each PlnUnit in the selected MngUnit.
@@ -117,15 +122,15 @@ object PlnLandscape :
   def neighborAvailability(
                             comp: Map[Long,PlnUnit],
                             struct: Graph[Long,DefaultEdge],
+                            neighborCache: NeighborCache[Long,DefaultEdge],
                             eco: Map[Long,EcoUnit],
                             available: Boolean
                           ):
   Map[Long, Int] =
-    val iNode = struct.nodes.head.toOuter
-    (struct get iNode).innerNodeTraverser.withKind(DepthFirst).collect{
-      case n if comp.getOrElse(n.toOuter,PlnUnit()).isAvailable(eco) =>
-        if available then (n.toOuter, n.neighbors.count(x => comp.getOrElse(x.toOuter,PlnUnit()).isAvailable(eco) ))
-        else (n.toOuter, n.neighbors.count(x => !comp.getOrElse(x.toOuter,PlnUnit()).isAvailable(eco) ))
+    struct.vertexSet().asScala.toSet.collect{
+      case n if comp.getOrElse(n, PlnUnit()).isAvailable(eco) =>
+        if available then (n, neighborCache.neighborsOf(n).asScala.toSet.count(x => comp.getOrElse(x, PlnUnit()).isAvailable(eco)))
+        else (n, neighborCache.neighborsOf(n).asScala.toSet.count(x => !comp.getOrElse(x, PlnUnit()).isAvailable(eco)))
     }.toMap
 
   def subLandscape(

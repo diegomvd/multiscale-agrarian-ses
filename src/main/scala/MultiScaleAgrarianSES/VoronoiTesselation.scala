@@ -3,9 +3,11 @@ package MultiScaleAgrarianSES
 import scala.collection.immutable.ListMap
 import scala.annotation.tailrec
 import scala.util.Random
+import scala.jdk.CollectionConverters.ListHasAsScala
 
 import org.jgrapht._
 import org.jgrapht.graph._
+import org.jgrapht.Graphs.neighborListOf
 
 /**
  * Used to extend a Landscape to a BaseLandscape. This trait gives a Landscape the possibility to perform a Voronoi
@@ -46,13 +48,13 @@ trait VoronoiTesselation extends SpatialStochasticEvents:
   def newEdges(
                 nodes: Map[Long, Vector[Long]]
               ):
-  List[UnDiEdge[Long]] =
+  List[(Long,Long)] =
     nodes.toSet.subsets(2).collect{
       case s if s.head._2.exists{
-        id => (this.structure get id).neighbors.exists{
-          n => s.last._2.contains(n.toOuter)
+        id => neighborListOf(this.structure,id).asScala.toList.exists{
+          n => s.last._2.contains(n)
         }
-      } => UnDiEdge(s.head._1, s.last._1)
+      } => (s.head._1, s.last._1)
     }.toList
 
   /**
@@ -66,7 +68,7 @@ trait VoronoiTesselation extends SpatialStochasticEvents:
                  n_seeds: Int,
                  rnd: Random
                ):
-  (Map[Long, Vector[Long]], Graph[Long, UnDiEdge]) =
+  (Map[Long, Vector[Long]], Graph[Long, DefaultEdge]) =
 
     @tailrec
     def rec(
@@ -88,8 +90,15 @@ trait VoronoiTesselation extends SpatialStochasticEvents:
     val seeded = this.seeded(n_seeds,rnd)
     val assigned: Map[Long, Long] = rec(seeded)
     val nodes: Map[Long, Vector[Long]] = VoronoiTesselation.groupByPolygon(assigned)
-    val edges/*: List[UnDiEdge]*/ = this.newEdges(nodes)
-    (nodes,Graph.from(nodes.keys,edges))
+    val edges: List[(Long,Long)] = this.newEdges(nodes)
+    val g: Graph[Long,DefaultEdge] = new SimpleGraph[Long,DefaultEdge](classOf[DefaultEdge])
+    edges.foreach{
+      (v1,v2) =>
+      g.addVertex(v1)
+      g.addVertex(v2)
+      g.addEdge(v1,v2)
+    }
+    (nodes,g)
 
 object VoronoiTesselation:
 
@@ -100,7 +109,7 @@ object VoronoiTesselation:
    * */
   def cumulativeProbabilities(
                                assigned: Map[Long, Long],
-                               structure: Graph[Long, UnDiEdge]
+                               structure: Graph[Long, DefaultEdge]
                              ):
   ListMap[Long,Double] =
     ListMap(
@@ -108,8 +117,8 @@ object VoronoiTesselation:
         v =>
           if v._2 == -1L // If the polygon is not colonized yet
           then {
-            val neighbors = (structure get v._1).neighbors
-            (v._1, neighbors.count(n => assigned.getOrElse(n.toOuter,-1L) != -1L).toDouble / neighbors.size.toDouble) // Count the number of colonized neighbors
+            val neighbors = neighborListOf(structure,v._1).asScala.toList
+            (v._1, neighbors.count(n => assigned.getOrElse(n,-1L) != -1L).toDouble / neighbors.size.toDouble) // Count the number of colonized neighbors
           }
           else (v._1,0.0)
       } .filter(_._2>0.0)
@@ -144,17 +153,16 @@ object VoronoiTesselation:
   def selectGrowingPolygon(
                             id: Long,
                             comp: Map[Long, Long],
-                            struct: Graph[Long,UnDiEdge],
+                            struct: Graph[Long,DefaultEdge],
                             rnd: Random
                           ):
   Long =
       rnd.shuffle(
-        (struct get id).neighbors.filter(
-          n => comp.getOrElse(n.toOuter,-1L) != -1L
+        neighborListOf(struct,id).asScala.toList.filter(
+          n => comp.getOrElse(n,-1L) != -1L
         )
       ) .take(1)
         .head
-        .toOuter
 
 
 end VoronoiTesselation

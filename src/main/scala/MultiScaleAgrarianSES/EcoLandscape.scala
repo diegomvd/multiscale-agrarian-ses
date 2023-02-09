@@ -7,6 +7,8 @@ import scala.util.Random
 
 import org.jgrapht._
 import org.jgrapht.graph._
+import org.jgrapht.alg.util.NeighborCache
+
 
 /**
  *
@@ -31,6 +33,7 @@ import org.jgrapht.graph._
 case class EcoLandscape(
                          composition: Map[Long,EcoUnit],
                          structure: Graph[Long,DefaultEdge],
+                         neighborCache: NeighborCache[Long,DefaultEdge],
                          size: Int,
                          ecr: Int,
                          scal_exp: Double,
@@ -161,7 +164,8 @@ object EcoLandscape :
 
     val comp = buildComposition(r)
     val struct = buildStructure(r,comp,ecr)
-    EcoLandscape(comp,struct,ModCo.area(r),ecr,scal_exp,area_max_abs,yes,s_rec,s_deg,s_flo)
+    val neighborCache = new NeighborCache[Long,DefaultEdge](struct)
+    EcoLandscape(comp,struct,neighborCache,ModCo.area(r),ecr,scal_exp,area_max_abs,yes,s_rec,s_deg,s_flo)
 
   /**
   @param r is the radius of the biophysical landscape
@@ -180,10 +184,12 @@ object EcoLandscape :
                       ecr: Int
                     ):
   Graph[Long, DefaultEdge] =
-    val g: Graph[Long, DefaultEdge] = new SimpleGraph[Long, DefaultEdge](classOf[DefaultEdge])
+    var g: Graph[Long, DefaultEdge] = new SimpleGraph[Long, DefaultEdge](classOf[DefaultEdge])
     val nodes: List[Long] = composition.keys.toList
-    nodes.toSet.subsets(2).foreach {
+    println(nodes.toSet)
+    nodes.toSet.subsets(2).tapEach {
         case s if ModCo.neighbors(s.head.toInt, r, ecr).contains(s.last) =>
+          println(s)
           g.addVertex(s.head)
           g.addVertex(s.last)
           g.addEdge(s.head, s.last)
