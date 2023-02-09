@@ -4,8 +4,9 @@ import scala.util.Random
 import scala.math.pow
 import scala.annotation.tailrec
 import scala.reflect._
-import scalax.collection.Graph
-import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
+
+import org.jgrapht._
+import org.jgrapht.graph._
 
 /**
 Extends a landscape composed by a graph of EcoUnits with ecosystem services functionalities. The trait serves to
@@ -18,7 +19,7 @@ trait EcoServices :
   val scal_exp: Double
   val area_max: Int
   val composition: Map[Long,EcoUnit]
-  val structure: Graph[Long,UnDiEdge]
+  val structure: Graph[Long,DefaultEdge]
 
   /**
    * @return a map with the EcoUnit as key and their incoming ES flow as value
@@ -81,7 +82,7 @@ trait EcoServices :
 object EcoServices :
 
   def naturalConnectedComponents(
-                                  struct: Graph[Long,UnDiEdge],
+                                  struct: Graph[Long,DefaultEdge],
                                   comp: Map[Long,EcoUnit]
                                 ):
   Map[Long, Graph[Long, UnDiEdge]] =
@@ -146,7 +147,7 @@ object EcoServices :
   /**
    * Calculates the ecosystem service */
   def incomingEcoServicePerUnit(
-                                 struct: Graph[Long, UnDiEdge],
+                                 struct: Graph[Long, DefaultEdge],
                                  out: Map[Long,Double]
                                ):
   Map[Long, Double] =
@@ -160,7 +161,7 @@ object EcoServices :
     }.toMap
 
   def ecoServices(
-                   struct: Graph[Long,UnDiEdge],
+                   struct: Graph[Long,DefaultEdge],
                    comp: Map[Long,EcoUnit],
                    scal_exp: Double,
                    size: Int,
@@ -174,7 +175,7 @@ object EcoServices :
     EcoServices.incomingEcoServicePerUnit(struct, out)
 
   def averageEcoServices(
-                          struct: Graph[Long, UnDiEdge],
+                          struct: Graph[Long, DefaultEdge],
                           comp: Map[Long, EcoUnit],
                           scal_exp: Double,
                           size: Int,

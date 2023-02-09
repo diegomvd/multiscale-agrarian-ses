@@ -2,12 +2,10 @@ package MultiScaleAgrarianSES
 
 import scala.math.pow
 import scala.math.max
-import scalax.collection.Graph
-import scalax.collection.GraphPredef.*
-import scalax.collection.GraphEdge.*
-import scalax.collection.GraphTraversal.*
-
 import scala.util.Random
+
+import org.jgrapht._
+import org.jgrapht.graph._
 
 /**
 Implementation of the Planning Landscape. A PlnLandscape is on the top of an EcoLandscape and at the base of a
@@ -20,7 +18,7 @@ MngLandscape. It is composed by a collection of PlnUnits.
 */
 case class PlnLandscape(
                          composition: Map[Long,PlnUnit],
-                         structure: Graph[Long,UnDiEdge],
+                         structure: Graph[Long,DefaultEdge],
                          unitArea: Int,
                          size: Int
                        )
@@ -82,8 +80,8 @@ object PlnLandscape :
                                     eco: EcoLandscape,
                                     rnd: Random
                                   ):
-  (Map[Long,PlnUnit], Graph[Long,UnDiEdge]) =
-    val (compInit, struct): (Map[Long,Vector[Long]], Graph[Long,UnDiEdge]) = eco.tesselate(nu,rnd)
+  (Map[Long,PlnUnit], Graph[Long,DefaultEdge]) =
+    val (compInit, struct): (Map[Long,Vector[Long]], Graph[Long,DefaultEdge]) = eco.tesselate(nu,rnd)
     (compInit.map{case (id,vec) => (id,PlnUnit(id,vec))}, struct)
 
   /**
@@ -118,7 +116,7 @@ object PlnLandscape :
   */
   def neighborAvailability(
                             comp: Map[Long,PlnUnit],
-                            struct: Graph[Long,UnDiEdge],
+                            struct: Graph[Long,DefaultEdge],
                             eco: Map[Long,EcoUnit],
                             available: Boolean
                           ):

@@ -1,8 +1,5 @@
 package MultiScaleAgrarianSES
 
-import scalax.collection.Graph
-import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
-
 /**
  * Implementation of Agriculture: a trait used to extend a Landscape.
  * @todo check mapValues and reduce

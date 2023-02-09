@@ -1,8 +1,7 @@
 package MultiScaleAgrarianSES
 
 import scala.collection.immutable.ListMap
-import scalax.collection.Graph
-import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
+
 
 /**
 Implementation of the Management Unit. MngUnits are the elementary constituents of the management landscape and are

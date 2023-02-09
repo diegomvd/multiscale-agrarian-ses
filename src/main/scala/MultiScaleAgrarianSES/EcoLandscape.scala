@@ -5,8 +5,8 @@ import scala.collection.immutable.ListMap
 import scala.math.pow
 import scala.util.Random
 
-import scalax.collection.Graph
-import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
+import org.jgrapht._
+import org.jgrapht.graph._
 
 /**
  *
@@ -30,7 +30,7 @@ import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
 */
 case class EcoLandscape(
                          composition: Map[Long,EcoUnit],
-                         structure: Graph[Long,UnDiEdge], 
+                         structure: Graph[Long,DefaultEdge],
                          size: Int,
                          ecr: Int,
                          scal_exp: Double,
@@ -179,14 +179,16 @@ object EcoLandscape :
                       composition: Map[Long,EcoUnit],
                       ecr: Int
                     ):
-  Graph[Long, UnDiEdge] =
+  Graph[Long, DefaultEdge] =
+    val g: Graph[Long, DefaultEdge] = new SimpleGraph[Long, DefaultEdge](classOf[DefaultEdge])
     val nodes: List[Long] = composition.keys.toList
-    val edges = // List[UnDiEdge]
-      nodes.toSet.subsets(2).collect {
+    nodes.toSet.subsets(2).foreach {
         case s if ModCo.neighbors(s.head.toInt, r, ecr).contains(s.last) =>
-          UnDiEdge(s.head, s.last)
-      }.toList
-    Graph.from(nodes,edges)
+          g.addVertex(s.head)
+          g.addVertex(s.last)
+          g.addEdge(s.head, s.last)
+      }
+    g
 
 
   /**

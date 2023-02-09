@@ -5,7 +5,9 @@ lazy val root = (project in file("."))
   .settings(
     name := "multiscale-agrarian-ses",
     libraryDependencies += "org.scala-lang" %% "scala3-library" % "3.1.2",
-    libraryDependencies += "org.scala-graph" % "graph-core_2.13" % "1.13.5"
+    libraryDependencies += "org.scala-graph" % "graph-core_2.13" % "1.13.5",
+    // https://mvnrepository.com/artifact/org.jgrapht/jgrapht-core
+    libraryDependencies += "org.jgrapht" % "jgrapht-core" % "1.5.1"
   )
 
 enablePlugins(SbtOsgi)

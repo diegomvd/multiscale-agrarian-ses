@@ -3,8 +3,9 @@ package MultiScaleAgrarianSES
 import scala.collection.immutable.ListMap
 import scala.annotation.tailrec
 import scala.util.Random
-import scalax.collection.Graph
-import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
+
+import org.jgrapht._
+import org.jgrapht.graph._
 
 /**
  * Used to extend a Landscape to a BaseLandscape. This trait gives a Landscape the possibility to perform a Voronoi
@@ -15,7 +16,7 @@ import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
 trait VoronoiTesselation extends SpatialStochasticEvents:
   type A <: LandscapeUnit
   val composition: Map[Long,A]
-  val structure: Graph[Long,UnDiEdge]
+  val structure: Graph[Long,DefaultEdge]
 
   /**
    * Creates a seeded composition graph to start the tesselation. The function preserves graph structure but changes

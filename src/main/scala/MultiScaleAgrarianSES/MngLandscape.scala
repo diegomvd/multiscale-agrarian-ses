@@ -3,8 +3,9 @@ package MultiScaleAgrarianSES
 import scala.collection.immutable.ListMap
 import scala.util.Random
 import scala.reflect._
-import scalax.collection.Graph
-import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
+
+import org.jgrapht._
+import org.jgrapht.graph._
 
 /**
 Implementation of the Management Landscape, composed by Management Units. A MngLandscape is extends a TopLandscape and
@@ -16,7 +17,7 @@ the number of Management Units f the Management Landscape that apply a land-spar
 */
 case class MngLandscape(
                          composition: Map[Long,MngUnit],
-                         structure: Graph[Long,UnDiEdge],
+                         structure: Graph[Long,DefaultEdge],
                          unitArea: Int,
                          n_sparing: Int,
                          size: Int)
@@ -63,7 +64,7 @@ object MngLandscape :
     val nm = TopLandscape.numberOfUnits(unitAreaAbs,ModCo.area(ecoRadius))
     if nm > pln.size then println("There are more management units than planning units, tesselation of the planning landscape will yield an error.")
 
-    val (compInit, struct): (Map[Long,Vector[Long]], Graph[Long,UnDiEdge]) = pln.tesselate(nm,rnd)
+    val (compInit, struct): (Map[Long,Vector[Long]], Graph[Long,DefaultEdge]) = pln.tesselate(nm,rnd)
     val n_sparing = fs * nm
     val sparing_ids: Vector[Long] = rnd.shuffle(compInit.keys).take( (fs * n_sparing).toInt ).toVector
     val comp = compInit.map{
