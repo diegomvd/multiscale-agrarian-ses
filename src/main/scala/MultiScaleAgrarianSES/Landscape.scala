@@ -1,8 +1,7 @@
 package MultiScaleAgrarianSES
 
-import scalax.collection.Graph
-import scalax.collection.GraphPredef.*
-import scalax.collection.GraphEdge.*
+import org.jgrapht._
+import org.jgrapht.graph._
 
 /**
  * Base implementation of the landscape trait. At their minimum expression landscapes are characterized by their
@@ -14,7 +13,7 @@ import scalax.collection.GraphEdge.*
 trait Landscape:
   type A <: LandscapeUnit
   val composition: Map[Long,A]
-  val structure: Graph[Long,UnDiEdge]
+  val structure: Graph[Long,DefaultEdge]
   val size:Int
 
   /**

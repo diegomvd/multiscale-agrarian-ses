@@ -1,0 +1,351 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="66ea0882-e2e8-40b0-9b9e-71f29929e3fb" name="Changes" comment="Changes for non-dimensional scale parameters and new OM plugin">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/config-classes/$78b714fc72d619bcfc43$.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/config-classes/$78b714fc72d619bcfc43.cache" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/config-classes/$78b714fc72d619bcfc43.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/config-classes/$819753246c9e966b1342$.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/config-classes/$819753246c9e966b1342.cache" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/config-classes/$819753246c9e966b1342.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/config-classes/$858ef54a8f1fe3a67931$.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/config-classes/$858ef54a8f1fe3a67931.cache" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/config-classes/$858ef54a8f1fe3a67931.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/config-classes/$9d1c7b26324b4201b318$.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/config-classes/$9d1c7b26324b4201b318.cache" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/config-classes/$9d1c7b26324b4201b318.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/config-classes/$abd070ff1d52b24f681c$.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/config-classes/$abd070ff1d52b24f681c.cache" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/config-classes/$abd070ff1d52b24f681c.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/config-classes/$b119a91e2c4559a1e9e6$.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/config-classes/$b119a91e2c4559a1e9e6.cache" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/config-classes/$b119a91e2c4559a1e9e6.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/config-classes/$cbe82b37db7ad771045c$.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/config-classes/$cbe82b37db7ad771045c.cache" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/config-classes/$cbe82b37db7ad771045c.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/config-classes/$e131aa76fef76f0b5568$.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/config-classes/$e131aa76fef76f0b5568.cache" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/config-classes/$e131aa76fef76f0b5568.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/config-classes/$edcf673f5cd1bd524e62$.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/config-classes/$edcf673f5cd1bd524e62.cache" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/config-classes/$edcf673f5cd1bd524e62.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/scala-2.12/sbt-1.0/update/update_cache_2.12/inputs" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/scala-2.12/sbt-1.0/update/update_cache_2.12/inputs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/scala-2.12/sbt-1.0/update/update_cache_2.12/output" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/scala-2.12/sbt-1.0/update/update_cache_2.12/output" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/streams/_global/dependencyPositions/_global/streams/update_cache_2.12/input_dsp" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/streams/_global/dependencyPositions/_global/streams/update_cache_2.12/input_dsp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/streams/_global/dependencyPositions/_global/streams/update_cache_2.12/output_dsp" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/streams/_global/dependencyPositions/_global/streams/update_cache_2.12/output_dsp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/streams/_global/update/_global/streams/out" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/streams/_global/update/_global/streams/out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/streams/compile/compileIncremental/_global/streams/out" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/streams/compile/compileIncremental/_global/streams/out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/streams/compile/copyResources/_global/streams/out" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/streams/compile/copyResources/_global/streams/out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/streams/compile/dependencyClasspath/_global/streams/export" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/streams/compile/dependencyClasspath/_global/streams/export" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/streams/compile/externalDependencyClasspath/_global/streams/export" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/streams/compile/externalDependencyClasspath/_global/streams/export" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/streams/compile/incOptions/_global/streams/out" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/streams/compile/incOptions/_global/streams/out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/streams/compile/managedClasspath/_global/streams/export" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/streams/compile/managedClasspath/_global/streams/export" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/streams/runtime/dependencyClasspath/_global/streams/export" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/streams/runtime/dependencyClasspath/_global/streams/export" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/streams/runtime/externalDependencyClasspath/_global/streams/export" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/streams/runtime/externalDependencyClasspath/_global/streams/export" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/streams/runtime/fullClasspath/_global/streams/export" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/streams/runtime/fullClasspath/_global/streams/export" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/streams/runtime/managedClasspath/_global/streams/export" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/streams/runtime/managedClasspath/_global/streams/export" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/scala/MultiScaleAgrarianSES/Agriculture.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/MultiScaleAgrarianSES/Agriculture.scala" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/scala/MultiScaleAgrarianSES/EcoLandscape.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/MultiScaleAgrarianSES/EcoLandscape.scala" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/scala/MultiScaleAgrarianSES/EcoServices.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/MultiScaleAgrarianSES/EcoServices.scala" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/scala/MultiScaleAgrarianSES/Main.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/MultiScaleAgrarianSES/Main.scala" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/scala/MultiScaleAgrarianSES/Matrix.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/MultiScaleAgrarianSES/Matrix.scala" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/scala/MultiScaleAgrarianSES/MngLandscape.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/MultiScaleAgrarianSES/MngLandscape.scala" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/scala/MultiScaleAgrarianSES/MngUnit.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/MultiScaleAgrarianSES/MngUnit.scala" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/scala/MultiScaleAgrarianSES/PlnLandscape.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/MultiScaleAgrarianSES/PlnLandscape.scala" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/scala/MultiScaleAgrarianSES/Simulation.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/MultiScaleAgrarianSES/Simulation.scala" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/scala/MultiScaleAgrarianSES/VoronoiTesselation.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/MultiScaleAgrarianSES/VoronoiTesselation.scala" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/Agriculture$.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/Agriculture$.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/Agriculture.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/Agriculture.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/Agriculture.tasty" beforeDir="false" afterPath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/Agriculture.tasty" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/EcoLandscape$.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/EcoLandscape$.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/EcoLandscape.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/EcoLandscape.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/EcoLandscape.tasty" beforeDir="false" afterPath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/EcoLandscape.tasty" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/EcoServices$.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/EcoServices$.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/EcoServices.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/EcoServices.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/EcoServices.tasty" beforeDir="false" afterPath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/EcoServices.tasty" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/Main$.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/Main$.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/Main.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/Main.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/Main.tasty" beforeDir="false" afterPath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/Main.tasty" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/Matrix.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/Matrix.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/Matrix.tasty" beforeDir="false" afterPath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/Matrix.tasty" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/MngLandscape$.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/MngLandscape$.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/MngLandscape.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/MngLandscape.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/MngLandscape.tasty" beforeDir="false" afterPath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/MngLandscape.tasty" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/MngStrategy.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/MngStrategy.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/MngStrategy.tasty" beforeDir="false" afterPath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/MngStrategy.tasty" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/PlnLandscape$$anon$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/PlnLandscape$$anon$1.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/PlnLandscape$.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/PlnLandscape$.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/PlnLandscape.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/PlnLandscape.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/PlnLandscape.tasty" beforeDir="false" afterPath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/PlnLandscape.tasty" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/Simulation$.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/Simulation$.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/Simulation.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/Simulation.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/Simulation.tasty" beforeDir="false" afterPath="$PROJECT_DIR$/target/scala-3.1.0/classes/MultiScaleAgrarianSES/Simulation.tasty" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/scala-3.1.0/update/update_cache_3/output" beforeDir="false" afterPath="$PROJECT_DIR$/target/scala-3.1.0/update/update_cache_3/output" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="CodeStyleSettingsInfer">
+    <option name="done" value="true" />
+  </component>
+  <component name="ExternalProjectsData">
+    <projectState path="$PROJECT_DIR$">
+      <ProjectState />
+    </projectState>
+  </component>
+  <component name="ExternalProjectsManager">
+    <system id="SBT">
+      <state>
+        <projects_view>
+          <tree_state>
+            <expand>
+              <path>
+                <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
+                <item name="multiscale-agrarian-ses" type="f1a62948:ProjectNode" />
+              </path>
+            </expand>
+            <select />
+          </tree_state>
+        </projects_view>
+      </state>
+    </system>
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Class" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="master" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
+  </component>
+  <component name="ProjectCodeStyleSettingsMigration">
+    <option name="version" value="2" />
+  </component>
+  <component name="ProjectId" id="2FJTgO6BlV5CKJ4FfL5TOKb4EaO" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;Downloaded.Files.Path.Enabled&quot;: &quot;false&quot;,
+    &quot;Repository.Attach.Annotations&quot;: &quot;false&quot;,
+    &quot;Repository.Attach.JavaDocs&quot;: &quot;false&quot;,
+    &quot;Repository.Attach.Sources&quot;: &quot;false&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/dibepa/git/learners_calibration&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Libraries&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.5344828&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.lookFeel&quot;
+  }
+}</component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/src/main/scala/MultiScaleAgrarianSES" />
+    </key>
+  </component>
+  <component name="RunDashboard">
+    <option name="configurationTypes">
+      <set>
+        <option value="ScalaScriptConsoleRunConfiguration" />
+      </set>
+    </option>
+  </component>
+  <component name="ScalaProjectSettings">
+    <option name="scala3DisclaimerShown" value="true" />
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="66ea0882-e2e8-40b0-9b9e-71f29929e3fb" name="Changes" comment="" />
+      <created>1664209299475</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1664209299475</updated>
+    </task>
+    <task id="LOCAL-00001" summary="first commit: beginning of the project is a copy and paste from multi-farming to start from a separate repository than the C++ one, as the other repository becomes legacy">
+      <created>1664211127525</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1664211127525</updated>
+    </task>
+    <task id="LOCAL-00002" summary="Progress migrating from spark to scala-graph">
+      <created>1664295072194</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1664295072194</updated>
+    </task>
+    <task id="LOCAL-00003" summary="Further adaptations to scala-graph lib">
+      <created>1664375155018</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1664375155018</updated>
+    </task>
+    <task id="LOCAL-00004" summary="Commit prior to shift graph nodes to id and stocking a map[id,unit]">
+      <created>1664385666358</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1664385666358</updated>
+    </task>
+    <task id="LOCAL-00005" summary="Commit prior to shifting to extensive use of integers">
+      <created>1664445435119</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1664445435119</updated>
+    </task>
+    <task id="LOCAL-00006" summary="Only need to revise the Matrix for full migration to scala-graph">
+      <created>1664468762005</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1664468762005</updated>
+    </task>
+    <task id="LOCAL-00007" summary="Only need to revise the Matrix for full migration to scala-graph">
+      <created>1664525892366</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1664525892366</updated>
+    </task>
+    <task id="LOCAL-00008" summary="Migration to scala-graph completed. Possible error in project structure fails build">
+      <created>1664525960579</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1664525960579</updated>
+    </task>
+    <task id="LOCAL-00009" summary="Updated population and production equations, fixed build and plugins for OM">
+      <created>1664530324563</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1664530324563</updated>
+    </task>
+    <task id="LOCAL-00010" summary="Main object, still lacks an output class to extract selected metrics from the Matrix object">
+      <created>1664553010001</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1664553010001</updated>
+    </task>
+    <task id="LOCAL-00011" summary="Output for static analysis of landscape optimization ready">
+      <created>1664566140755</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1664566140755</updated>
+    </task>
+    <task id="LOCAL-00012" summary="Fixes in main and output metrics">
+      <created>1664784975292</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1664784975292</updated>
+    </task>
+    <task id="LOCAL-00013" summary="Last fixes and ammends">
+      <created>1665520501294</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1665520501294</updated>
+    </task>
+    <task id="LOCAL-00014" summary="including area for max ecoservice provision">
+      <created>1665762566973</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1665762566973</updated>
+    </task>
+    <task id="LOCAL-00015" summary="all scales passed to radius for easier comparison">
+      <created>1666343271552</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1666343271552</updated>
+    </task>
+    <task id="LOCAL-00016" summary="fixed rng seeding and added track of progress">
+      <created>1666346673576</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1666346673576</updated>
+    </task>
+    <task id="LOCAL-00017" summary="Changes for non-dimensional scale parameters and new OM plugin">
+      <created>1667833194147</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1667833194147</updated>
+    </task>
+    <option name="localTasksCounter" value="18" />
+    <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="develop" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="first commit: beginning of the project is a copy and paste from multi-farming to start from a separate repository than the C++ one, as the other repository becomes legacy" />
+    <MESSAGE value="Progress migrating from spark to scala-graph" />
+    <MESSAGE value="Further adaptations to scala-graph lib" />
+    <MESSAGE value="Commit prior to shift graph nodes to id and stocking a map[id,unit]" />
+    <MESSAGE value="Commit prior to shifting to extensive use of integers" />
+    <MESSAGE value="Only need to revise the Matrix for full migration to scala-graph" />
+    <MESSAGE value="Migration to scala-graph completed. Possible error in project structure fails build" />
+    <MESSAGE value="Updated population and production equations, fixed build and plugins for OM" />
+    <MESSAGE value="Main object, still lacks an output class to extract selected metrics from the Matrix object" />
+    <MESSAGE value="Output for static analysis of landscape optimization ready" />
+    <MESSAGE value="Fixes in main and output metrics" />
+    <MESSAGE value="Last fixes and ammends" />
+    <MESSAGE value="including area for max ecoservice provision" />
+    <MESSAGE value="all scales passed to radius for easier comparison" />
+    <MESSAGE value="fixed rng seeding and added track of progress" />
+    <MESSAGE value="Changes for non-dimensional scale parameters and new OM plugin" />
+    <option name="LAST_COMMIT_MESSAGE" value="Changes for non-dimensional scale parameters and new OM plugin" />
+  </component>
+</project>

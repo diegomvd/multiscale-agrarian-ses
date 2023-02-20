@@ -3,8 +3,9 @@ package MultiScaleAgrarianSES
 import scala.collection.immutable.ListMap
 import scala.util.Random
 import scala.reflect._
-import scalax.collection.Graph
-import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
+
+import org.jgrapht._
+import org.jgrapht.graph._
 
 /**
 Implementation of the Management Landscape, composed by Management Units. A MngLandscape is extends a TopLandscape and
@@ -16,7 +17,7 @@ the number of Management Units f the Management Landscape that apply a land-spar
 */
 case class MngLandscape(
                          composition: Map[Long,MngUnit],
-                         structure: Graph[Long,UnDiEdge],
+                         structure: Graph[Long,DefaultEdge],
                          unitArea: Int,
                          n_sparing: Int,
                          size: Int)
@@ -59,20 +60,18 @@ object MngLandscape :
   MngLandscape =
     // Transform relative management area to absolute
     val unitAreaAbs : Int = (unitArea * ModCo.area(ecoRadius).toDouble).toInt
-
     val nm = TopLandscape.numberOfUnits(unitAreaAbs,ModCo.area(ecoRadius))
     if nm > pln.size then println("There are more management units than planning units, tesselation of the planning landscape will yield an error.")
-
-    val (compInit, struct): (Map[Long,Vector[Long]], Graph[Long,UnDiEdge]) = pln.tesselate(nm,rnd)
-    val n_sparing = fs * nm
-    val sparing_ids: Vector[Long] = rnd.shuffle(compInit.keys).take( (fs * n_sparing).toInt ).toVector
+    val (compInit, struct): (Map[Long,Vector[Long]], Graph[Long,DefaultEdge]) = pln.tesselate(nm,rnd)
+    val n_sparing: Int = (fs * nm).toInt
+    val sparing_ids: Vector[Long] = rnd.shuffle(compInit.keys).take( n_sparing ).toVector
     val comp = compInit.map{
       case (id,vec) =>
         if sparing_ids.contains(id)
         then (id,MngUnit(id,vec,MngStrategy.LandSparing))
-        else (id,MngUnit(id,vec,MngStrategy.LandSparing))
+        else (id,MngUnit(id,vec,MngStrategy.LandSharing))
     }
-    MngLandscape(comp,struct,unitAreaAbs,n_sparing.toInt,nm)
+    MngLandscape(comp,struct,unitAreaAbs,n_sparing,nm)
 
   /**
    *  Calculate the relative probabilities for each MngUnit to be selected for a conversion event.

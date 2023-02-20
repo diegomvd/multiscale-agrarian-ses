@@ -1,0 +1,107 @@
+// seed for the random number generator
+val seed = Val[Long]
+
+// Model parameters for static landscape optimization
+val ecoLandscapeRadius = Val[Double]
+val ecoConnectivityArea = Val[Double]
+val ecoServicesScalingExp = Val[Double]
+val ecoServicesMaxArea = Val[Double]
+val yEcoService = Val[Double]
+val planningArea = Val[Double]
+val managementArea = Val[Double]
+val nHouseholdsSupportedPerHiIntUnit = Val[Double]
+val fractionOfMngUnitsSparing = Val[Double]
+val initFractionAgricultural = Val[Double]
+val initFractionDegraded = Val[Double]
+
+// Number of replicas to estimate ES robustness
+val n = Val[Int]
+
+// Outputs
+val average = Val[Double]
+val robustness = Val[Double]
+val pop = Val[Int]
+
+val model = ScalaTask(
+    """
+    import MultiScaleAgrarianSES._
+
+    //val n = 1
+    //val ecoLandscapeRadius = 4.0
+    
+    val n = 10
+    val ecoLandscapeRadius = 30.0
+    
+    val ecoServicesScalingExp = 0.25
+    val yEcoService = 0.5 
+    val nHouseholdsSupportedPerHiIntUnit = 20.0
+    val initFractionDegraded = 0.0
+    val ecoConnectivityArea = 0.007 // this is an area of 19, thus a connectivity range of 2 cells
+    
+    val (average,robustness,pop): (Double, Double, Int)  = Simulation(
+                                                                ecoLandscapeRadius.toInt,
+                                                                ecoConnectivityArea,
+                                                                ecoServicesScalingExp,
+                                                                ecoServicesMaxArea,
+                                                                yEcoService,
+                                                                planningArea,
+                                                                managementArea,
+                                                                nHouseholdsSupportedPerHiIntUnit,
+                                                                fractionOfMngUnitsSparing,
+                                                                initFractionAgricultural,
+                                                                initFractionDegraded,
+                                                                seed
+                                                            )
+                                                            .runInitialization
+                                                            .outputStaticLandscapeOptimization(n)
+    
+    """
+    ) set (
+        
+        inputs += ( 
+                    ecoServicesMaxArea,
+                    planningArea,
+                    managementArea,
+                    fractionOfMngUnitsSparing,
+                    initFractionAgricultural,
+                    seed),
+
+        outputs += (average,
+                    robustness,
+                    pop,
+                    ecoConnectivityArea),
+
+        plugins += (pluginsOf[MultiScaleAgrarianSES.Simulation],
+                    pluginsOf[MultiScaleAgrarianSES.Matrix])
+        
+)
+
+val env = SLURMEnvironment(
+    "bengochead",
+    "muse-login.meso.umontpellier.fr",
+    // optional parameters
+    partition = "defq",
+    time = 1 hour,
+    sharedDirectory = "/scratch/bengochead/openmole/AgrarianMultiScale"
+  )
+
+PSEEvolution(
+   evaluation = model,
+   parallelism = 1,
+   termination = 1,
+   genome = Seq(
+     //ecoConnectivityArea in (0.003,0.04),  // these are radiuses between from 1 to 6
+     ecoServicesMaxArea in (0.1,1.0),
+     planningArea in (0.005,0.2),
+     managementArea in (0.005,0.2),
+     fractionOfMngUnitsSparing in (0.0,1.0),
+     initFractionAgricultural in (0.0,0.95)
+   ),
+   objective = Seq(
+     average in (0.0 to 1.0 by 0.1),  
+     robustness in (0.0 to 1.0 by 0.1),
+     pop in (0.0 to 25000 by 2500)
+   ),
+   reject = "managementArea < planningArea",
+   stochastic = Stochastic(seed = seed, reevaluate = 0.2, sample = 100)
+ ) hook (workDirectory / "pse_static", frequency = 1) on env        

@@ -3,9 +3,17 @@ package MultiScaleAgrarianSES
 import scala.util.Random
 import scala.math.pow
 import scala.annotation.tailrec
-import scala.reflect._
-import scalax.collection.Graph
-import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
+import scala.reflect.*
+import scala.jdk.CollectionConverters.SetHasAsScala
+import scala.jdk.CollectionConverters.MutableSetHasAsJava
+
+import org.jgrapht.*
+import org.jgrapht.graph.*
+import org.jgrapht.alg.connectivity.BiconnectivityInspector
+import org.jgrapht.alg.util.NeighborCache
+
+import java.util.function.Predicate
+
 
 /**
 Extends a landscape composed by a graph of EcoUnits with ecosystem services functionalities. The trait serves to
@@ -18,20 +26,21 @@ trait EcoServices :
   val scal_exp: Double
   val area_max: Int
   val composition: Map[Long,EcoUnit]
-  val structure: Graph[Long,UnDiEdge]
+  val structure: Graph[Long,DefaultEdge]
+  val neighborCache: NeighborCache[Long,DefaultEdge] // to avoid re-calculation of neighborhood at each time.
 
   /**
    * @return a map with the EcoUnit as key and their incoming ES flow as value
    * */
   def ecoServices:
   Map[Long, Double]  =
-    EcoServices.ecoServices(this.structure,this.composition,this.scal_exp,this.size,area_max.toDouble)
+    EcoServices.ecoServices(this.structure,this.neighborCache,this.composition,this.scal_exp,this.size,area_max.toDouble/this.size)
 
   /**
    *  @return the set of disconnected natural connected components
    */
   def naturalConnectedComponents:
-  Map[Long, Graph[Long, UnDiEdge]] =
+  Map[Long, Graph[Long, DefaultEdge]] =
     EcoServices.naturalConnectedComponents(this.structure,this.composition)
 
   def averageEcoServices:
@@ -57,7 +66,7 @@ trait EcoServices :
         val new_n: Int = n + 1
         val nId: Long = rnd.shuffle(comp.filter(_._2.matchCover(LandCover.Natural)).keys).take(1).head
         val newComp: Map[Long, EcoUnit] = comp.map { v => if v._1 == nId then (v._1, EcoUnit(nId, LandCover.Degraded)) else v }
-        val newAverage: Double = EcoServices.averageEcoServices(this.structure, newComp, this.scal_exp, this.size, area_max.toDouble)
+        val newAverage: Double = EcoServices.averageEcoServices(this.structure, this.neighborCache, newComp, this.scal_exp, this.size, area_max.toDouble)
         rec(threshold, newAverage, newComp, new_n)
     val threshold: Double = average * 0.5
     rec(threshold, average, this.composition, 0) / this.composition.count(_._2.matchCover(LandCover.Natural)).toDouble
@@ -81,15 +90,20 @@ trait EcoServices :
 object EcoServices :
 
   def naturalConnectedComponents(
-                                  struct: Graph[Long,UnDiEdge],
+                                  struct: Graph[Long,DefaultEdge],
                                   comp: Map[Long,EcoUnit]
                                 ):
-  Map[Long, Graph[Long, UnDiEdge]] =
-    struct.componentTraverser().withSubgraph(n => comp.getOrElse(n.toOuter, EcoUnit()).matchCover(LandCover.Natural)) // Get components of the natural subgraph
-      .map(_.to(Graph)) // Cast the components to graphs
-      .zipWithIndex // Associate each component with an index
-      .map(_.swap) // Invert order of indices and graphs
-      .map { case (nccId, g) => (nccId.toLong, g) }.toMap // Convert the index to Long type
+  Map[Long, Graph[Long, DefaultEdge]] =
+    val naturalUnits: java.util.Set[Long] = struct.vertexSet().asScala.filter( comp.getOrElse(_,EcoUnit()).matchCover(LandCover.Natural)).asJava
+    val naturalLandscape: Graph[Long,DefaultEdge] = new AsSubgraph[Long,DefaultEdge](struct,naturalUnits)
+    val naturalConnectivity: BiconnectivityInspector[Long,DefaultEdge] = new BiconnectivityInspector[Long,DefaultEdge](naturalLandscape)
+    val ncc = naturalConnectivity.getConnectedComponents.asScala.toSet
+      .zipWithIndex
+      .map(_.swap)
+      .map { case (nccId, g) => (nccId.toLong, g) }
+      .toMap
+    //val max_size: Double = ncc.map( m =>  m._2.vertexSet().size ).toList.max.toDouble/comp.size.toDouble
+    ncc
 
   /**
    * Creates a Map with EcoUnits as keys and NCC id as value.
@@ -98,11 +112,11 @@ object EcoServices :
    * @return the ecounit-ncc map
    * */
   def nodeComponentMembership(
-                               ncc: Map[Long, Graph[Long, UnDiEdge]]
+                               ncc: Map[Long, Graph[Long, DefaultEdge]]
                              ):
   Map[Long, Long] =
     ncc.flatMap{
-      case (id, graph) => graph.nodes.toOuter.map(node => (node, id))
+      case (id, graph) => graph.vertexSet().asScala.toSet.map(node => (node, id))
     }
 
   /**
@@ -111,12 +125,12 @@ object EcoServices :
    * @return the map ncc-area
    * */
   def nccNormalizedAreaMap(
-                            ncc: Map[Long, Graph[Long, UnDiEdge]],
+                            ncc: Map[Long, Graph[Long, DefaultEdge]],
                             size: Double
                           ):
   Map[Long,Double] =
     ncc.map{
-      case (id, graph) => (id, graph.nodes.size.toDouble / size)
+      case (id, graph) => (id, graph.vertexSet().asScala.toSet.size.toDouble / size)
     }
 
   /**
@@ -144,23 +158,28 @@ object EcoServices :
     }
 
   /**
-   * Calculates the ecosystem service */
+   * Calculates the ecosystem service
+   * @todo double check the function*/
   def incomingEcoServicePerUnit(
-                                 struct: Graph[Long, UnDiEdge],
+                                 struct: Graph[Long, DefaultEdge],
+                                 neighborCache: NeighborCache[Long,DefaultEdge],
                                  out: Map[Long,Double]
                                ):
   Map[Long, Double] =
-    (struct get struct.nodes.head).innerNodeTraverser.map[(Long, Double)]{
-      n =>
-        val (count,es) =
-          n.neighbors.foldLeft[(Int, Double)]((0, 0.0)) { // (neighbor count, eco services)
-            case ((count, es), neighbor) => (count + 1, es + out.getOrElse(neighbor.toOuter, 0.0))
-          }
-        ( n.toOuter, es/count.toDouble )
-    }.toMap
+    struct.vertexSet().asScala.toSet
+      .map[(Long, Double)]{
+        n =>
+          val (count,es) =
+            neighborCache.neighborsOf(n).asScala.toSet.foldLeft[(Int, Double)]((0, 0.0)) { // (neighbor count, eco services)
+              case ((count, es), neighbor) => (count + 1, es + out.getOrElse(neighbor, 0.0)) 
+            }
+          //if es>0.0 then println(es/count.toDouble)
+          ( n, es/count.toDouble )
+     }.toMap
 
   def ecoServices(
-                   struct: Graph[Long,UnDiEdge],
+                   struct: Graph[Long,DefaultEdge],
+                   neighborCache: NeighborCache[Long,DefaultEdge],
                    comp: Map[Long,EcoUnit],
                    scal_exp: Double,
                    size: Int,
@@ -170,18 +189,19 @@ object EcoServices :
     val ncc = EcoServices.naturalConnectedComponents(struct, comp)
     val ncm = EcoServices.nodeComponentMembership(ncc)
     val nam = EcoServices.nccNormalizedAreaMap(ncc, size.toDouble)
-    val out = EcoServices.outgoingEcoServicePerUnit(ncm, nam, scal_exp, a_max)
-    EcoServices.incomingEcoServicePerUnit(struct, out)
+    val out = EcoServices.outgoingEcoServicePerUnit(ncm, nam, scal_exp, a_max/size.toDouble)
+    EcoServices.incomingEcoServicePerUnit(struct, neighborCache, out)
 
   def averageEcoServices(
-                          struct: Graph[Long, UnDiEdge],
+                          struct: Graph[Long, DefaultEdge],
+                          neighborCache: NeighborCache[Long,DefaultEdge],
                           comp: Map[Long, EcoUnit],
                           scal_exp: Double,
                           size: Int,
                           a_max: Double
                         ):
   Double =
-    val es = ecoServices(struct,comp,scal_exp,size,a_max)
+    val es = ecoServices(struct,neighborCache,comp,scal_exp,size,a_max)
     es.values.sum / es.size.toDouble
 
 end EcoServices

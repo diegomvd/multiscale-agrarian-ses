@@ -28,7 +28,7 @@ case class Simulation(
 
   def runInitialization:
   Matrix =
-    println("Building the ecological landscape... ")
+    //println("Building the ecological landscape... ")
     val initEco = EcoLandscape(
       this.ecoLandscapeRadius,
       this.ecoConnectivityArea,
@@ -39,14 +39,14 @@ case class Simulation(
       this.sensDegradation,
       this.sensFertilityLoss
     )
-    println("Creating planning landscape... ")
+    //println("Creating planning landscape on top... ")
     val plnLandscape = PlnLandscape(
       this.ecoLandscapeRadius,
       this.planningArea,
       initEco,
       this.random
     )
-    println("Creating management landscape... ")
+    //println("Creating management landscape no top... ")
     val mngLandscape = MngLandscape(
       ecoLandscapeRadius,
       this.managementArea,
@@ -54,7 +54,7 @@ case class Simulation(
       this.fractionOfMngUnitsSparing,
       this.random
     )
-    println("Initializing ecological composition... ")
+    //println("Initializing ecological composition... ")
     val ecoLandscape = initEco.initialize(
       plnLandscape,
       mngLandscape,
@@ -62,13 +62,15 @@ case class Simulation(
       this.initFractionDegraded,
       this.random
     )
-    println("Initializing human population at equilibrium with resources... ")
+
+    //println("Initializing human population at equilibrium with resources... ")
     val humanPop = HumanPop(
       ecoLandscape.resourceProduction(ecoLandscape.ecoServices),
       this.sensResourceDemand,
       this.nHouseholdsSupportedPerHiIntUnit
     )
-    println("Initializing the Matrix... ")
+    
+    // println("Initializing the Matrix... ")
     Matrix(
       ecoLandscape,
       plnLandscape,

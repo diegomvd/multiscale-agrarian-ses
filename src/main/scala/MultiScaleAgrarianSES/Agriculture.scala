@@ -1,8 +1,5 @@
 package MultiScaleAgrarianSES
 
-import scalax.collection.Graph
-import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
-
 /**
  * Implementation of Agriculture: a trait used to extend a Landscape.
  * @todo check mapValues and reduce
@@ -76,7 +73,8 @@ object Agriculture:
                          es: Double
                        ):
   Double =
-    (1.0 - yes) + yes * es
+    val x = (1.0 - yes) + yes * es
+    x
 
 
   def highIntResEquation():

@@ -2,8 +2,7 @@ package MultiScaleAgrarianSES
 
 import scala.math.pow
 import scala.math.max
-import scalax.collection.Graph
-import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
+
 
 /**
  * Implementation of the Planning Units. A PlnUnit is defined by its composition: a collection of VertexIds of EcoUnits

@@ -5,8 +5,10 @@ import scala.collection.immutable.ListMap
 import scala.math.pow
 import scala.util.Random
 
-import scalax.collection.Graph
-import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
+import org.jgrapht._
+import org.jgrapht.graph._
+import org.jgrapht.alg.util.NeighborCache
+
 
 /**
  *
@@ -30,7 +32,8 @@ import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
 */
 case class EcoLandscape(
                          composition: Map[Long,EcoUnit],
-                         structure: Graph[Long,UnDiEdge], 
+                         structure: Graph[Long,DefaultEdge],
+                         neighborCache: NeighborCache[Long,DefaultEdge],
                          size: Int,
                          ecr: Int,
                          scal_exp: Double,
@@ -96,7 +99,7 @@ case class EcoLandscape(
       // Get the Id of the selected unit, and the upper bound for the unit's propensity
       val (mngId,upperP): (Long,Double) = mng.selectUnitIdWithPropensity(x_rnd,mngP)
       // Get the lower bound of the unit's propensity: this is not efficient because of ListMap
-      val lowerP: Double = mngP.getOrElse(mngId-1L,mngP.head._2)
+      val lowerP: Double = mngP.getOrElse(mngId-1L,0.0)
       // Get the management unit at the selected Id
       val mngU: MngUnit = mng.composition.getOrElse(mngId,MngUnit())
       // Calculate the propensities of planning units within the selected management unit
@@ -157,11 +160,14 @@ object EcoLandscape :
   EcoLandscape =
     // conversion relative area to absolute radius
     val ecr: Int = ModCo.radius( (eca * ModCo.area(r).toDouble).toInt)
+    println(ecr)
+    println(eca * ModCo.area(r).toDouble)
     val area_max_abs: Int =  (area_max * ModCo.area(r).toDouble).toInt
 
     val comp = buildComposition(r)
     val struct = buildStructure(r,comp,ecr)
-    EcoLandscape(comp,struct,ModCo.area(r),ecr,scal_exp,area_max_abs,yes,s_rec,s_deg,s_flo)
+    val neighborCache = new NeighborCache[Long,DefaultEdge](struct)
+    EcoLandscape(comp,struct,neighborCache,ModCo.area(r),ecr,scal_exp,area_max_abs,yes,s_rec,s_deg,s_flo)
 
   /**
   @param r is the radius of the biophysical landscape
@@ -179,14 +185,17 @@ object EcoLandscape :
                       composition: Map[Long,EcoUnit],
                       ecr: Int
                     ):
-  Graph[Long, UnDiEdge] =
+  Graph[Long, DefaultEdge] =
+    var g: Graph[Long, DefaultEdge] = new SimpleGraph[Long, DefaultEdge](classOf[DefaultEdge])
     val nodes: List[Long] = composition.keys.toList
-    val edges = // List[UnDiEdge]
-      nodes.toSet.subsets(2).collect {
-        case s if ModCo.neighbors(s.head.toInt, r, ecr).contains(s.last) =>
-          UnDiEdge(s.head, s.last)
-      }.toList
-    Graph.from(nodes,edges)
+    nodes.toSet.subsets(2).foreach {
+      s => if ModCo.neighbors(s.head.toInt, r, ecr).contains(s.last) then {
+        g.addVertex(s.head)
+        g.addVertex(s.last)
+        g.addEdge(s.head, s.last)
+      }
+    }
+    g
 
 
   /**
@@ -277,7 +286,6 @@ object EcoLandscape :
            ):
     EcoLandscape =
       val n: Int = n_agr + n_deg
-     // println("remaining conversions = " + n)
       if n<=0 then eco
       else {
         val n_rnd = rnd.nextInt(n)

@@ -1,8 +1,7 @@
 package MultiScaleAgrarianSES
 
 import scala.collection.immutable.ListMap
-import scalax.collection.Graph
-import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
+
 
 /**
 Implementation of the Management Unit. MngUnits are the elementary constituents of the management landscape and are
@@ -53,7 +52,7 @@ case class MngUnit(
       ListMap(
         MngUnit.weights(this.composition,pln,eco,this.strategy)
           .map{
-            case (id,p) => (id, p * u_tcp)
+            case (id,p) =>  (id, p * u_tcp)
           }
           .toSeq.sortWith(_._1 < _._1):_*
       )

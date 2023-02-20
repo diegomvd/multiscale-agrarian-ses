@@ -4,8 +4,6 @@ import scala.annotation.tailrec
 import scala.collection.immutable.ListMap
 import scala.math.log
 import scala.util.Random
-import scalax.collection.Graph
-import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
 
 /**
  * Implementation of the complete social-ecological system. The Matrix is the digital representation of the system and
@@ -118,9 +116,9 @@ case class Matrix(
                                          n: Int
                                        ):
   (Double,Double,Int) =
-    println("Calculating ES average and robustness...")
+    //println("Calculating ES average and robustness...")
     val (avg,rob) = this.eco.averageAndRobustnessEcoServices(n,this.rnd)
-    println("Results:")
+    //println("Results:")
     (avg,rob,this.pop.size)
 
 object Matrix :
