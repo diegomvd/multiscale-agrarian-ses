@@ -8,7 +8,7 @@ import scala.util.Random
 object Main extends App:
 
   val simulation = parameters()
-  val res = time { main(simulation,"static",2) }
+  val res = time { main(simulation,"static",1) }
   println(res)
 
   /**
@@ -22,30 +22,30 @@ object Main extends App:
   (Double,Double,Int) =
     simulationType match
       case "static" =>
-        println("Preparing static landscape configuration simulation...")
+       // println("Preparing static landscape configuration simulation...")
         sim.runInitialization.outputStaticLandscapeOptimization(n)
       case "dynamic" =>
-        println("Preparing social-ecological dynamics simulation...")
+       // println("Preparing social-ecological dynamics simulation...")
         sim.runSocialEcoDynamics.outputStaticLandscapeOptimization(n)
 
   def parameters(
                   maximumSimulationTime: Double = 0.0,
-                  ecoLandscapeRadius: Int = 3,
-                  ecoConnectivityArea: Double = 0.007,
+                  ecoLandscapeRadius: Int = 10,
+                  ecoConnectivityArea: Double = 0.04, //0.058
                   ecoServicesScalingExp: Double = 0.25,
-                  ecoServicesMaxArea: Double = 0.5,
+                  ecoServicesMaxArea: Double = 1.0,
                   yEcoService: Double = 0.5,
                   sensRecovery: Double = 1.0,
                   sensDegradation: Double = 1.0,
                   sensFertilityLoss: Double = 1.0,
-                  planningArea: Double = 0.01,
-                  managementArea: Double = 0.1,
+                  planningArea: Double = 0.0035,
+                  managementArea: Double = 1.0,
                   sensResourceDemand: Double = 1.0,
                   nHouseholdsSupportedPerHiIntUnit: Double = 1.0,
-                  fractionOfMngUnitsSparing: Double = 0.5,
-                  initFractionAgricultural: Double = 0.2,
-                  initFractionDegraded: Double = 0.1,
-                  seed: Long = 1L
+                  fractionOfMngUnitsSparing: Double = 1.0,
+                  initFractionAgricultural: Double = 0.7,
+                  initFractionDegraded: Double = 0.0,
+                  seed: Long = 123456L
                 ):
   Simulation =
     new Simulation(

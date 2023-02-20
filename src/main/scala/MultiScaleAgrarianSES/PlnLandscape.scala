@@ -104,7 +104,6 @@ object PlnLandscape :
   PlnLandscape =
     // Transform relative unit area to absolute unit area
     val unitAreaAbs: Int = (unitArea * ModCo.area(r).toDouble).toInt
-
     val adjacencyNeighborhoodEcoLandscape: EcoLandscape = eco.copy(structure = EcoLandscape.buildStructure(r,eco.composition,1))
     val nu = TopLandscape.numberOfUnits(unitAreaAbs,adjacencyNeighborhoodEcoLandscape.size)
     val (comp,struct) = buildCompositionAndStructure(nu,adjacencyNeighborhoodEcoLandscape,rnd)

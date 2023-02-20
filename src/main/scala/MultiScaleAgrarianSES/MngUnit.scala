@@ -52,7 +52,7 @@ case class MngUnit(
       ListMap(
         MngUnit.weights(this.composition,pln,eco,this.strategy)
           .map{
-            case (id,p) => (id, p * u_tcp)
+            case (id,p) =>  (id, p * u_tcp)
           }
           .toSeq.sortWith(_._1 < _._1):_*
       )

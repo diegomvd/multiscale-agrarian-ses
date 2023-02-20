@@ -34,7 +34,7 @@ trait EcoServices :
    * */
   def ecoServices:
   Map[Long, Double]  =
-    EcoServices.ecoServices(this.structure,this.neighborCache,this.composition,this.scal_exp,this.size,area_max.toDouble)
+    EcoServices.ecoServices(this.structure,this.neighborCache,this.composition,this.scal_exp,this.size,area_max.toDouble/this.size)
 
   /**
    *  @return the set of disconnected natural connected components
@@ -97,11 +97,13 @@ object EcoServices :
     val naturalUnits: java.util.Set[Long] = struct.vertexSet().asScala.filter( comp.getOrElse(_,EcoUnit()).matchCover(LandCover.Natural)).asJava
     val naturalLandscape: Graph[Long,DefaultEdge] = new AsSubgraph[Long,DefaultEdge](struct,naturalUnits)
     val naturalConnectivity: BiconnectivityInspector[Long,DefaultEdge] = new BiconnectivityInspector[Long,DefaultEdge](naturalLandscape)
-    naturalConnectivity.getConnectedComponents.asScala.toSet
+    val ncc = naturalConnectivity.getConnectedComponents.asScala.toSet
       .zipWithIndex
       .map(_.swap)
       .map { case (nccId, g) => (nccId.toLong, g) }
       .toMap
+    //val max_size: Double = ncc.map( m =>  m._2.vertexSet().size ).toList.max.toDouble/comp.size.toDouble
+    ncc
 
   /**
    * Creates a Map with EcoUnits as keys and NCC id as value.
@@ -169,8 +171,9 @@ object EcoServices :
         n =>
           val (count,es) =
             neighborCache.neighborsOf(n).asScala.toSet.foldLeft[(Int, Double)]((0, 0.0)) { // (neighbor count, eco services)
-              case ((count, es), neighbor) => (count + 1, es + out.getOrElse(neighbor, 0.0)) //TODO:not sure about this
+              case ((count, es), neighbor) => (count + 1, es + out.getOrElse(neighbor, 0.0)) 
             }
+          //if es>0.0 then println(es/count.toDouble)
           ( n, es/count.toDouble )
      }.toMap
 
@@ -186,7 +189,7 @@ object EcoServices :
     val ncc = EcoServices.naturalConnectedComponents(struct, comp)
     val ncm = EcoServices.nodeComponentMembership(ncc)
     val nam = EcoServices.nccNormalizedAreaMap(ncc, size.toDouble)
-    val out = EcoServices.outgoingEcoServicePerUnit(ncm, nam, scal_exp, a_max)
+    val out = EcoServices.outgoingEcoServicePerUnit(ncm, nam, scal_exp, a_max/size.toDouble)
     EcoServices.incomingEcoServicePerUnit(struct, neighborCache, out)
 
   def averageEcoServices(

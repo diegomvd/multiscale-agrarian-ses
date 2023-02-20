@@ -39,6 +39,7 @@ trait VoronoiTesselation extends SpatialStochasticEvents:
       case (id,_) => if seeds.contains(id) then (id,id) else (id,-1L)
     }
 
+
   /**
    * Calculates the edges of the new composition graph emerging from the tesselation.
    *
@@ -76,7 +77,6 @@ trait VoronoiTesselation extends SpatialStochasticEvents:
            ):
     Map[Long, Long] =
       val remaining: Int = assigned.count(_._2 == -1L)
-
       if remaining <= 0.0 then assigned
       else{
         val cum_prob = VoronoiTesselation.cumulativeProbabilities(assigned, this.structure)
@@ -87,7 +87,7 @@ trait VoronoiTesselation extends SpatialStochasticEvents:
         rec(new_graph)
       }
 
-    val seeded = this.seeded(n_seeds,rnd)
+    val seeded: Map[Long, Long] = this.seeded(n_seeds, rnd)
     val assigned: Map[Long, Long] = rec(seeded)
     val nodes: Map[Long, Vector[Long]] = VoronoiTesselation.groupByPolygon(assigned)
     val edges: List[(Long,Long)] = this.newEdges(nodes)
@@ -157,12 +157,14 @@ object VoronoiTesselation:
                             rnd: Random
                           ):
   Long =
-      rnd.shuffle(
+      val polId = rnd.shuffle(
         neighborListOf(struct,id).asScala.toList.filter(
           n => comp.getOrElse(n,-1L) != -1L
         )
       ) .take(1)
         .head
+      val gp = comp.getOrElse(polId,-1L)
+      gp
 
 
 end VoronoiTesselation

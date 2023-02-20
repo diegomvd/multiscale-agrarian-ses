@@ -116,9 +116,9 @@ case class Matrix(
                                          n: Int
                                        ):
   (Double,Double,Int) =
-    println("Calculating ES average and robustness...")
+    //println("Calculating ES average and robustness...")
     val (avg,rob) = this.eco.averageAndRobustnessEcoServices(n,this.rnd)
-    println("Results:")
+    //println("Results:")
     (avg,rob,this.pop.size)
 
 object Matrix :

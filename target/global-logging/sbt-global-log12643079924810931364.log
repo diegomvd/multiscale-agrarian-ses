@@ -1,0 +1,8 @@
+[0m[[0m[0mdebug[0m] [0m[0m> Exec(osgiBundle, None, None)[0m
+[0m[[0m[0mdebug[0m] [0m[0mEvaluating tasks: osgiBundle[0m
+[0m[[0m[0mdebug[0m] [0m[0mRunning task... Cancel: Signal, check cycles: false, forcegc: true[0m
+[0m[[0m[0minfo[0m] [0m[0mcompiling 3 Scala sources to /home/dibepa/git/multiscale-agrarian-ses/target/scala-3.1.0/classes ...[0m
+[0m[[0m[0minfo[0m] [0m[0mdone compiling[0m
+[0m[[0m[33mwarn[0m] [0m[0mbnd: Export MultiScaleAgrarianSES,  has 3,  private references [org.jgrapht, org.jgrapht.alg.util, org.jgrapht.graph][0m
+[0m[[0m[32msuccess[0m] [0m[0mTotal time: 4 s, completed Feb 16, 2023, 12:32:54 PM[0m
+[0m[[0m[0mdebug[0m] [0m[0m> Exec(idea-shell, None, None)[0m

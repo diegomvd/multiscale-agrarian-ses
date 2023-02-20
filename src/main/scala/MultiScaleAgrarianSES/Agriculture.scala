@@ -73,7 +73,8 @@ object Agriculture:
                          es: Double
                        ):
   Double =
-    (1.0 - yes) + yes * es
+    val x = (1.0 - yes) + yes * es
+    x
 
 
   def highIntResEquation():

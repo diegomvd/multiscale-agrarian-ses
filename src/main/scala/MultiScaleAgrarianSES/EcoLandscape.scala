@@ -99,7 +99,7 @@ case class EcoLandscape(
       // Get the Id of the selected unit, and the upper bound for the unit's propensity
       val (mngId,upperP): (Long,Double) = mng.selectUnitIdWithPropensity(x_rnd,mngP)
       // Get the lower bound of the unit's propensity: this is not efficient because of ListMap
-      val lowerP: Double = mngP.getOrElse(mngId-1L,mngP.head._2)
+      val lowerP: Double = mngP.getOrElse(mngId-1L,0.0)
       // Get the management unit at the selected Id
       val mngU: MngUnit = mng.composition.getOrElse(mngId,MngUnit())
       // Calculate the propensities of planning units within the selected management unit
@@ -160,6 +160,8 @@ object EcoLandscape :
   EcoLandscape =
     // conversion relative area to absolute radius
     val ecr: Int = ModCo.radius( (eca * ModCo.area(r).toDouble).toInt)
+    println(ecr)
+    println(eca * ModCo.area(r).toDouble)
     val area_max_abs: Int =  (area_max * ModCo.area(r).toDouble).toInt
 
     val comp = buildComposition(r)
@@ -186,14 +188,13 @@ object EcoLandscape :
   Graph[Long, DefaultEdge] =
     var g: Graph[Long, DefaultEdge] = new SimpleGraph[Long, DefaultEdge](classOf[DefaultEdge])
     val nodes: List[Long] = composition.keys.toList
-    println(nodes.toSet)
-    nodes.toSet.subsets(2).tapEach {
-        case s if ModCo.neighbors(s.head.toInt, r, ecr).contains(s.last) =>
-          println(s)
-          g.addVertex(s.head)
-          g.addVertex(s.last)
-          g.addEdge(s.head, s.last)
+    nodes.toSet.subsets(2).foreach {
+      s => if ModCo.neighbors(s.head.toInt, r, ecr).contains(s.last) then {
+        g.addVertex(s.head)
+        g.addVertex(s.last)
+        g.addEdge(s.head, s.last)
       }
+    }
     g
 
 
@@ -285,7 +286,6 @@ object EcoLandscape :
            ):
     EcoLandscape =
       val n: Int = n_agr + n_deg
-     // println("remaining conversions = " + n)
       if n<=0 then eco
       else {
         val n_rnd = rnd.nextInt(n)
