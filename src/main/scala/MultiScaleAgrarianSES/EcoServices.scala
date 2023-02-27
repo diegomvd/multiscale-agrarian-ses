@@ -34,7 +34,7 @@ trait EcoServices :
    * */
   def ecoServices:
   Map[Long, Double]  =
-    EcoServices.ecoServices(this.structure,this.neighborCache,this.composition,this.scal_exp,this.size,area_max.toDouble/this.size)
+    EcoServices.ecoServices(this.structure,this.neighborCache,this.composition,this.scal_exp,this.size,this.area_max.toDouble)
 
   /**
    *  @return the set of disconnected natural connected components
@@ -66,10 +66,22 @@ trait EcoServices :
         val new_n: Int = n + 1
         val nId: Long = rnd.shuffle(comp.filter(_._2.matchCover(LandCover.Natural)).keys).take(1).head
         val newComp: Map[Long, EcoUnit] = comp.map { v => if v._1 == nId then (v._1, EcoUnit(nId, LandCover.Degraded)) else v }
-        val newAverage: Double = EcoServices.averageEcoServices(this.structure, this.neighborCache, newComp, this.scal_exp, this.size, area_max.toDouble)
+        val newAverage: Double = EcoServices.averageEcoServices(this.structure, this.neighborCache, newComp, this.scal_exp, this.size, this.area_max.toDouble)
+       // println("N. Natural and new average")
+        //println(newComp.count(_._2.matchCover(LandCover.Natural))/this.size.toDouble)
+        //println(newAverage)
         rec(threshold, newAverage, newComp, new_n)
+    //println("N. Natural and average")
+    //println(this.composition.count(_._2.matchCover(LandCover.Natural))/this.size.toDouble)
+    //println(average)
+    //println(EcoServices.averageEcoServices(this.structure, this.neighborCache, this.composition, this.scal_exp, this.size, this.area_max.toDouble))
+    //println(this.averageEcoServices)
+    //println("going to rec")
     val threshold: Double = average * 0.5
-    rec(threshold, average, this.composition, 0) / this.composition.count(_._2.matchCover(LandCover.Natural)).toDouble
+    //println(threshold)
+    val n_remove: Double = rec(threshold, average, this.composition, 0)
+    //println(n_remove)
+    n_remove / this.composition.count(_._2.matchCover(LandCover.Natural)).toDouble
 
   def robustnessEcoServices(
                              average: Double,
@@ -102,7 +114,9 @@ object EcoServices :
       .map(_.swap)
       .map { case (nccId, g) => (nccId.toLong, g) }
       .toMap
+   // println("Size of largest component:")
     //val max_size: Double = ncc.map( m =>  m._2.vertexSet().size ).toList.max.toDouble/comp.size.toDouble
+   // println(max_size)
     ncc
 
   /**

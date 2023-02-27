@@ -32,20 +32,20 @@ object Main extends App:
                   maximumSimulationTime: Double = 0.0,
                   ecoLandscapeRadius: Int = 10,
                   ecoConnectivityArea: Double = 0.04, //0.058
-                  ecoServicesScalingExp: Double = 0.25,
+                  ecoServicesScalingExp: Double = 0.25,// 0.25,
                   ecoServicesMaxArea: Double = 1.0,
                   yEcoService: Double = 0.5,
                   sensRecovery: Double = 1.0,
                   sensDegradation: Double = 1.0,
                   sensFertilityLoss: Double = 1.0,
-                  planningArea: Double = 0.0035,
-                  managementArea: Double = 1.0,
+                  planningArea: Double = 0.005,
+                  managementArea: Double = 1.0,//0.0031,//1.0,
                   sensResourceDemand: Double = 1.0,
                   nHouseholdsSupportedPerHiIntUnit: Double = 1.0,
-                  fractionOfMngUnitsSparing: Double = 1.0,
-                  initFractionAgricultural: Double = 0.7,
+                  fractionOfMngUnitsSparing: Double = 0.0,
+                  initFractionAgricultural: Double = 0.45,
                   initFractionDegraded: Double = 0.0,
-                  seed: Long = 123456L
+                  seed: Long = 126L
                 ):
   Simulation =
     new Simulation(
