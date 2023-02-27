@@ -160,8 +160,8 @@ object EcoLandscape :
   EcoLandscape =
     // conversion relative area to absolute radius
     val ecr: Int = ModCo.radius( (eca * ModCo.area(r).toDouble).toInt)
-    println(ecr)
-    println(eca * ModCo.area(r).toDouble)
+   // println(ecr)
+   // println(eca * ModCo.area(r).toDouble)
     val area_max_abs: Int =  (area_max * ModCo.area(r).toDouble).toInt
 
     val comp = buildComposition(r)
