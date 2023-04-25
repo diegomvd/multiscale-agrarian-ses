@@ -17,6 +17,12 @@ trait Agriculture:
   Double =
     Agriculture.calculateProduction(this.composition,es,yes)
 
+  def resourceProductionMap(
+                             es: Map[Long, Double]
+                           ):
+  Map[Long, Double] =
+    Agriculture.resourceProductionMap(composition,es,yes)
+
 object Agriculture:
   /**
   @param es is the biophysical composition of the landscape joined with the es flow
@@ -63,6 +69,23 @@ object Agriculture:
   Double =
       lowIntResources(comp,es,yes) + highIntResources(comp,es)
 
+
+  def resourceProductionMap(
+                             comp: Map[Long, EcoUnit],
+                             es: Map[Long, Double],
+                             yes: Double
+                           ):
+  Map[Long,Double] =
+    comp.map{
+      case (id, eu) =>
+        eu.cover match
+          case LandCover.LowIntensity =>
+            val ecoServices: Double = es.getOrElse(id, 0.0)
+            (id,lowIntResEquation(yes, ecoServices))
+          case LandCover.HighIntensity => (id,highIntResEquation())
+          case _ => (id,0.0)
+    }
+
   /**
    *  @param yes is
    *  @param es is the ecosystem service inflow
@@ -73,7 +96,8 @@ object Agriculture:
                          es: Double
                        ):
   Double =
-    val x = (1.0 - yes) + yes * es
+    //val x = (1.0 - yes) + yes * es
+    val x = (1.0 - yes) + yes*es
     x
 
 

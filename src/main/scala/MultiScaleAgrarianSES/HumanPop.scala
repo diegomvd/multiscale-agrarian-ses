@@ -37,7 +37,7 @@ case class HumanPop(
                       resources: Double
                     ):
   Double =
-    this.size.toDouble - resources
+    this.size.toDouble - resources*this.his
 
   /**
   @return the total conversion propensity given the resource demand and the
@@ -47,7 +47,8 @@ case class HumanPop(
                                  resources: Double
                                ):
   Double =
-    this.s_res * this.resourceDemand(resources)
+    val demand = this.resourceDemand(resources)
+    if demand<0.0 then 0.0 else this.s_res*demand
 
   /**
   @param ival is the initial value for the cummulative sum of the propensities
@@ -58,7 +59,7 @@ case class HumanPop(
                                resources: Double
                              ):
   (Double,Double) =
-    val birth: Double = HumanPop.birthPropensity(i_val)
+    val birth: Double = HumanPop.birthPropensity(i_val,this.size)
     if resources > 0.0 then
       val death: Double = HumanPop.deathPropensity(birth,this.size,resources,this.his)
       (birth,death)
@@ -74,7 +75,7 @@ object HumanPop :
              his: Double
            ):
   HumanPop =
-    HumanPop(resources.toInt, s_res, his)
+    HumanPop((resources*his).toInt, s_res, his)
   def birth(
              size: Int
            ):
@@ -86,10 +87,11 @@ object HumanPop :
   Int =
     size - 1
   def birthPropensity(
-                       i_val: Double
+                       i_val: Double,
+                       popSize: Int
                      ):
   Double =
-    i_val + 1.0
+    i_val + popSize.toDouble
   def deathPropensity(
                        i_val: Double,
                        popSize: Int,

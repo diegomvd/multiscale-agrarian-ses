@@ -34,6 +34,7 @@ case class EcoLandscape(
                          composition: Map[Long,EcoUnit],
                          structure: Graph[Long,DefaultEdge],
                          neighborCache: NeighborCache[Long,DefaultEdge],
+                         neighborCacheStats: NeighborCache[Long,DefaultEdge],
                          size: Int,
                          ecr: Int,
                          scal_exp: Double,
@@ -42,7 +43,7 @@ case class EcoLandscape(
                          s_rec: Double,
                          s_deg: Double,
                          s_flo: Double)
-  extends BaseLandscape with Agriculture with EcoServices with SpontaneousPropensities with SpatialStochasticEvents :
+  extends BaseLandscape with Agriculture with EcoServices with SpontaneousPropensities with SpatialStochasticEvents with SpatialStatistics:
 
     type A = EcoUnit
     /**
@@ -160,14 +161,44 @@ object EcoLandscape :
   EcoLandscape =
     // conversion relative area to absolute radius
     val ecr: Int = ModCo.radius( (eca * ModCo.area(r).toDouble).toInt)
-   // println(ecr)
-   // println(eca * ModCo.area(r).toDouble)
+    println(ecr)
+    println(eca * ModCo.area(r).toDouble)
     val area_max_abs: Int =  (area_max * ModCo.area(r).toDouble).toInt
 
     val comp = buildComposition(r)
     val struct = buildStructure(r,comp,ecr)
     val neighborCache = new NeighborCache[Long,DefaultEdge](struct)
-    EcoLandscape(comp,struct,neighborCache,ModCo.area(r),ecr,scal_exp,area_max_abs,yes,s_rec,s_deg,s_flo)
+    EcoLandscape(comp,struct,neighborCache,neighborCache,ModCo.area(r),ecr,scal_exp,area_max_abs,yes,s_rec,s_deg,s_flo)
+
+  /*
+  * Constructor for the spatial statistics with a radius defining the neighborhood to calculate spatial statistics.
+  */
+  def apply(
+             r: Int,
+             rStats: Int,
+             eca: Double,
+             scal_exp: Double,
+             area_max: Double,
+             yes: Double,
+             s_rec: Double,
+             s_deg: Double,
+             s_flo: Double
+           ):
+  EcoLandscape =
+    // conversion relative area to absolute radius
+    val ecr: Int = ModCo.radius((eca * ModCo.area(r).toDouble).toInt)
+    println(ecr)
+    println(eca * ModCo.area(r).toDouble)
+    val area_max_abs: Int = (area_max * ModCo.area(r).toDouble).toInt
+
+    val comp = buildComposition(r)
+    val struct = buildStructure(r, comp, ecr)
+    val neighborCache = new NeighborCache[Long, DefaultEdge](struct)
+
+    val structStats = buildStructure(r, comp, rStats)
+    val neighborCacheStats = new NeighborCache[Long, DefaultEdge](structStats)
+
+    EcoLandscape(comp, struct, neighborCache, neighborCacheStats, ModCo.area(r), ecr, scal_exp, area_max_abs, yes, s_rec, s_deg, s_flo)
 
   /**
   @param r is the radius of the biophysical landscape
@@ -229,10 +260,9 @@ object EcoLandscape :
                                 eco: EcoLandscape
                               ):
     EcoLandscape =
-      val propensity: ListMap[Long,Double] =  SpontaneousPropensities.propensity(0.0, eco.composition, eco.ecoServices, 1.0, LandCover.Natural, EcoUnit.decreasingPES)
-      val upper_bound = propensity.last._2
+      val (propensity,upper_bound): (ListMap[Long,Double],Double) =  SpontaneousPropensities.propensity(0.0, eco.composition, eco.ecoServices, 1.0, LandCover.Natural, EcoUnit.decreasingPES)
       if upper_bound > 0.0 then
-        val x_rnd: Double = rnd.between(0.0,propensity.last._2)
+        val x_rnd: Double = rnd.between(0.0,upper_bound)
         val ecoId = eco.selectUnitId(x_rnd, propensity)
         eco.update(ecoId, EcoUnit(ecoId, LandCover.Degraded))
       else

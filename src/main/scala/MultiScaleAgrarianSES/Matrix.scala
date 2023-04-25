@@ -74,6 +74,13 @@ case class Matrix(
              tcP: Double,
            ):
     Matrix =
+      println("State:")
+      print("Time=");println(world.t)
+      print("Population=");println(world.pop.size)
+      print("Natural=");println(world.eco.countNatural)
+      print("Agricultural=");println(world.eco.countAgricultural)
+      print("Degraded=");println(world.eco.countDegraded)
+
       // return the current state of the Matrix if the simulation is to stop
       if world.doesNotHaveNext(maxT) then world
       else {
@@ -121,6 +128,29 @@ case class Matrix(
     //println("Results:")
     (avg,rob,this.pop.size)
 
+  def outputSpatialStatistics(targetCover: LandCover):
+  (Double, Map[Double,Double]) =
+    val moranI: Double = this.eco.spatialAutocorrelationMoranI(targetCover)
+    val moranDiagram: Map[Double, Double] = this.eco.spatialAutocorrelationMoranDiagram
+    (moranI, moranDiagram)
+
+  def outputSpatialStatisticsNoDiagram(targetCover: LandCover):
+  Double =
+    val moranI: Double = this.eco.spatialAutocorrelationMoranI(targetCover)
+    moranI
+
+
+  def outputSpatialStatisticsESProd:
+  (Double,Double,Double) =
+    val ecoServices: Map[Long,Double] = this.eco.ecoServices
+    val resourceMap: Map[Long,Double] = this.eco.resourceProductionMap(ecoServices)
+
+    val moranIES: Double = this.eco.spatialAutocorrelationMoranI(ecoServices)
+    val moranIProd: Double = this.eco.spatialAutocorrelationMoranI(resourceMap)
+    val corrESProd: Double = this.eco.globalPearsonCorrelation(ecoServices,resourceMap)
+
+    (moranIES,moranIProd,corrESProd)
+
 object Matrix :
 
   /**
@@ -158,12 +188,16 @@ object Matrix :
               rnd: Random
             ):
   (Matrix, EventType) =
-    // expression for the next event time
-    val new_t: Double = world.t - 1.0/log(rnd.between(0.0, popP._2 + spontP._2 + tcP))
-    // random number to select an event, maximum is the sum of the cumulative propensities
-    val x_rnd: Double = rnd.between(0.0, popP._2 + spontP._2 + tcP)
 
-    selectEventType(x_rnd,popP._2,spontP._2,tcP) match {
+    // tcP is the only one that has not been calculated as a cumulative propensity.
+    // TODO: unify this.
+    val totalP: Double = spontP._2 + tcP
+    // expression for the next event time
+    val new_t: Double = world.t - 1.0/totalP*log(rnd.between(0.0, 1.0))
+    // random number to select an event, maximum is the sum of the cumulative propensities
+    val x_rnd: Double = rnd.between(0.0, totalP)
+
+    selectEventType(x_rnd,popP._2,spontP._2,totalP) match {
       case EventType.Demographic =>
         val upd_pop: HumanPop = world.pop.update(HumanPop.selectBirthOrDeath(x_rnd,popP))
         (world.copy(t = new_t, pop = upd_pop), EventType.Demographic)

@@ -7,8 +7,18 @@ import scala.util.Random
 
 object Main extends App:
 
-  val simulation = parameters()
-  val res = time { main(simulation,"static",1) }
+  private val simulation = parameters()
+  //val res = time { main(simulation,"static",1) }
+  //println(res)
+
+  //val res = time {
+  //  main(simulation, 1)
+  //}
+
+  // Social-ecological dynamics
+  val res = time {
+    main(simulation,"dynamic",1)
+  }
   println(res)
 
   /**
@@ -28,24 +38,41 @@ object Main extends App:
        // println("Preparing social-ecological dynamics simulation...")
         sim.runSocialEcoDynamics.outputStaticLandscapeOptimization(n)
 
+  def main(
+            sim: Simulation,
+            rStat: Int,
+            targetCover: LandCover
+          ):
+  Double =
+    sim.runSpatialStatistics(rStat).outputSpatialStatisticsNoDiagram(targetCover)
+
+  def main(
+            sim:Simulation,
+            rStat: Int
+          ):
+  (Double,Double,Double) =
+    sim.runSpatialStatistics(rStat).outputSpatialStatisticsESProd
+
+    // TODO: write results in file
+
   def parameters(
-                  maximumSimulationTime: Double = 0.0,
+                  maximumSimulationTime: Double = 10.0,
                   ecoLandscapeRadius: Int = 10,
-                  ecoConnectivityArea: Double = 0.04, //0.058
+                  ecoConnectivityArea: Double = 7.0/300.0, //0.058
                   ecoServicesScalingExp: Double = 0.25,// 0.25,
-                  ecoServicesMaxArea: Double = 1.0,
-                  yEcoService: Double = 0.5,
-                  sensRecovery: Double = 1.0,
+                  ecoServicesMaxArea: Double = 0.1,
+                  yEcoService: Double = 0.2,
+                  sensRecovery: Double = 5.0,
                   sensDegradation: Double = 1.0,
                   sensFertilityLoss: Double = 1.0,
-                  planningArea: Double = 0.005,
-                  managementArea: Double = 1.0,//0.0031,//1.0,
-                  sensResourceDemand: Double = 1.0,
-                  nHouseholdsSupportedPerHiIntUnit: Double = 1.0,
+                  planningArea: Double = 0.0006,
+                  managementArea: Double = 0.2,//0.0031,//1.0,
+                  sensResourceDemand: Double = 10.0,
+                  nHouseholdsSupportedPerHiIntUnit: Double = 10.0,
                   fractionOfMngUnitsSparing: Double = 0.0,
-                  initFractionAgricultural: Double = 0.45,
+                  initFractionAgricultural: Double = 0.2,
                   initFractionDegraded: Double = 0.0,
-                  seed: Long = 126L
+                  seed: Long = 127L
                 ):
   Simulation =
     new Simulation(

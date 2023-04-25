@@ -79,6 +79,51 @@ case class Simulation(
       this.random
     )
 
+  def runSpatialStatistics(rStat: Int):
+  Matrix =
+    val initEco = EcoLandscape(
+      this.ecoLandscapeRadius,
+      rStat,
+      this.ecoConnectivityArea,
+      this.ecoServicesScalingExp,
+      this.ecoServicesMaxArea,
+      this.yEcoService,
+      this.sensRecovery,
+      this.sensDegradation,
+      this.sensFertilityLoss
+    )
+
+    val plnLandscape = PlnLandscape(
+      this.ecoLandscapeRadius,
+      this.planningArea,
+      initEco,
+      this.random
+    )
+
+    val mngLandscape = MngLandscape(
+      ecoLandscapeRadius,
+      this.managementArea,
+      plnLandscape,
+      this.fractionOfMngUnitsSparing,
+      this.random
+    )
+
+    val ecoLandscape = initEco.initialize(
+      plnLandscape,
+      mngLandscape,
+      this.initFractionAgricultural,
+      this.initFractionDegraded,
+      this.random
+    )
+
+    Matrix(
+      ecoLandscape,
+      plnLandscape,
+      mngLandscape,
+      HumanPop(0.0,0.0,0.0),
+      this.random
+    )
+
 object Simulation:
 
   /**

@@ -36,7 +36,7 @@ case class MngLandscape(
                             eco: Map[Long,EcoUnit]
                           ):
   ListMap[Long,Double] =
-    val propensities: Map[Long,Double] = MngLandscape.probabilities(this.composition,pln,eco)
+    val propensities: Map[Long,Double] = MngLandscape.probabilities(this.composition,pln,eco,tcp)
     propensities.scanLeft((-1L, i_val))( (pre, now) => (now._1, now._2 + pre._2)).tail.to(ListMap)
 
 object MngLandscape :
@@ -84,10 +84,11 @@ object MngLandscape :
   def probabilities(
                      mng: Map[Long,MngUnit],
                      pln: Map[Long,PlnUnit],
-                     eco: Map[Long,EcoUnit]
+                     eco: Map[Long,EcoUnit],
+                     tcP: Double
                    ):
   Map[Long,Double] =
     val available_units = mng.filter( _._2.isAvailable(pln,eco) )
-    available_units.map{ case (id,_) => (id, 1.0/available_units.size) }
+    available_units.map{ case (id,_) => (id, 1.0/available_units.size*tcP) }
 
 end MngLandscape
