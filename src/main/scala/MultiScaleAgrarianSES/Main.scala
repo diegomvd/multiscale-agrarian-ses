@@ -17,9 +17,14 @@ object Main extends App:
 
   // Social-ecological dynamics
   val res = time {
-    main(simulation,"dynamic",1)
+    val world = simulation.runSocialEcoDynamics
+    println(world.historicNaturalArea)
+    //println(world.stateVariability(world.historicNaturalArea,20,10))
+    println(world.stateVariability(world.historicNaturalArea,20,10).max)
+    println(world.stateVariability(world.historicNaturalArea,20,10).sum/world.stateVariability(world.historicNaturalArea,20,10).size.toDouble)
   }
-  println(res)
+  //println(res)
+
 
   /**
    * Function to return EcoServices average and robustness and population size
@@ -36,7 +41,8 @@ object Main extends App:
         sim.runInitialization.outputStaticLandscapeOptimization(n)
       case "dynamic" =>
        // println("Preparing social-ecological dynamics simulation...")
-        sim.runSocialEcoDynamics.outputStaticLandscapeOptimization(n)
+       sim.runSocialEcoDynamics.outputStaticLandscapeOptimization(n)
+
 
   def main(
             sim: Simulation,
@@ -53,21 +59,19 @@ object Main extends App:
   (Double,Double,Double) =
     sim.runSpatialStatistics(rStat).outputSpatialStatisticsESProd
 
-    // TODO: write results in file
-
   def parameters(
-                  maximumSimulationTime: Double = 10.0,
+                  maximumSimulationTime: Double = 400.0,
                   ecoLandscapeRadius: Int = 10,
-                  ecoConnectivityArea: Double = 7.0/300.0, //0.058
+                  ecoConnectivityRadius: Int = 1, //0.058
                   ecoServicesScalingExp: Double = 0.25,// 0.25,
-                  ecoServicesMaxArea: Double = 0.1,
-                  yEcoService: Double = 0.2,
-                  sensRecovery: Double = 5.0,
-                  sensDegradation: Double = 1.0,
-                  sensFertilityLoss: Double = 1.0,
-                  planningArea: Double = 0.0006,
-                  managementArea: Double = 0.2,//0.0031,//1.0,
-                  sensResourceDemand: Double = 10.0,
+                  ecoServicesMaxArea: Double = 1.0,
+                  yEcoService: Double = 0.3,
+                  sensRecovery: Double = 1.0,
+                  sensDegradation: Double = 0.2,
+                  sensFertilityLoss: Double = 0.4,
+                  planningArea: Int = 1,
+                  managementArea: Double = 1.0,//0.0031,//1.0,
+                  sensResourceDemand: Double = 50.0,
                   nHouseholdsSupportedPerHiIntUnit: Double = 10.0,
                   fractionOfMngUnitsSparing: Double = 0.0,
                   initFractionAgricultural: Double = 0.2,
@@ -78,7 +82,7 @@ object Main extends App:
     new Simulation(
       maximumSimulationTime,
       ecoLandscapeRadius,
-      ecoConnectivityArea,
+      ecoConnectivityRadius,
       ecoServicesScalingExp,
       ecoServicesMaxArea,
       yEcoService,

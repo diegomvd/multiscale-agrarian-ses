@@ -12,7 +12,7 @@ lazy val root = (project in file("."))
 
 enablePlugins(SbtOsgi)
 
-OsgiKeys.exportPackage := Seq("MultiScaleAgrarianSES.*")
+OsgiKeys.exportPackage := Seq("MultiScaleAgrarianSES.*","MultiScaleConservationPlanning.*")
 
 OsgiKeys.importPackage := Seq("*;resolution:=optional")
 

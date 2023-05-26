@@ -5,14 +5,14 @@ import scala.util.Random
 case class Simulation(
                   maximumSimulationTime: Double,
                   ecoLandscapeRadius: Int,
-                  ecoConnectivityArea: Double,
+                  ecoConnectivityRadius: Int,
                   ecoServicesScalingExp: Double,
                   ecoServicesMaxArea: Double,
                   yEcoService: Double,
                   sensRecovery: Double,
                   sensDegradation: Double,
                   sensFertilityLoss: Double,
-                  planningArea: Double,
+                  planningArea: Int,
                   managementArea: Double,
                   sensResourceDemand: Double,
                   nHouseholdsSupportedPerHiIntUnit: Double,
@@ -22,16 +22,17 @@ case class Simulation(
                   random: Random
                 ):
 
+
   def runSocialEcoDynamics:
   Matrix =
-    runInitialization.simulate(this.maximumSimulationTime)
+    runInitialization.simulate(maxT = this.maximumSimulationTime,0.1)
 
   def runInitialization:
   Matrix =
     //println("Building the ecological landscape... ")
     val initEco = EcoLandscape(
       this.ecoLandscapeRadius,
-      this.ecoConnectivityArea,
+      this.ecoConnectivityRadius,
       this.ecoServicesScalingExp,
       this.ecoServicesMaxArea,
       this.yEcoService,
@@ -84,7 +85,7 @@ case class Simulation(
     val initEco = EcoLandscape(
       this.ecoLandscapeRadius,
       rStat,
-      this.ecoConnectivityArea,
+      this.ecoConnectivityRadius,
       this.ecoServicesScalingExp,
       this.ecoServicesMaxArea,
       this.yEcoService,
@@ -131,11 +132,11 @@ object Simulation:
    * */
   def apply(
              ecoLandscapeRadius: Int,
-             ecoConnectivityArea: Double,
+             ecoConnectivityRadius: Int,
              ecoServicesScalingExp: Double,
              ecoServicesMaxArea: Double,
              yEcoService: Double,
-             planningArea: Double,
+             planningArea: Int,
              managementArea: Double,
              nHouseholdsSupportedPerHiIntUnit: Double,
              fractionOfMngUnitsSparing: Double,
@@ -147,7 +148,7 @@ object Simulation:
     Simulation(
       maximumSimulationTime = 0.0,
       ecoLandscapeRadius,
-      ecoConnectivityArea,
+      ecoConnectivityRadius,
       ecoServicesScalingExp,
       ecoServicesMaxArea,
       yEcoService,

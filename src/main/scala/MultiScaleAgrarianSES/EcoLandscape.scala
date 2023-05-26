@@ -150,7 +150,7 @@ object EcoLandscape :
 
   def apply(
              r: Int,
-             eca: Double,
+             ecr: Int,
              scal_exp: Double,
              area_max: Double,
              yes: Double,
@@ -159,10 +159,10 @@ object EcoLandscape :
              s_flo: Double
            ):
   EcoLandscape =
-    // conversion relative area to absolute radius
-    val ecr: Int = ModCo.radius( (eca * ModCo.area(r).toDouble).toInt)
-    println(ecr)
-    println(eca * ModCo.area(r).toDouble)
+    // conversion relative area to absolute radius: NOW I CHANGED ECA TO DIRECTLY ECR BECAUSE IT SUCKED
+    //val ecr: Int = ModCo.radius( (eca * ModCo.area(r).toDouble).toInt)
+    //println(ecr)
+    //println(eca * ModCo.area(r).toDouble)
     val area_max_abs: Int =  (area_max * ModCo.area(r).toDouble).toInt
 
     val comp = buildComposition(r)
@@ -213,7 +213,7 @@ object EcoLandscape :
 
   def buildStructure(
                       r: Int,
-                      composition: Map[Long,EcoUnit],
+                      composition: Map[Long,LandscapeUnit],
                       ecr: Int
                     ):
   Graph[Long, DefaultEdge] =

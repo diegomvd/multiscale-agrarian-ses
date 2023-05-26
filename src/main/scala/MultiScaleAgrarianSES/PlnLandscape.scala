@@ -97,13 +97,14 @@ object PlnLandscape :
    * */
   def apply(
              r: Int,
-             unitArea: Double,
+             unitArea: Int,
              eco: EcoLandscape,
              rnd: Random
            ):
   PlnLandscape =
     // Transform relative unit area to absolute unit area
-    val unitAreaAbs: Int = (unitArea * ModCo.area(r).toDouble).toInt
+    //val unitAreaAbs: Int = (unitArea * ModCo.area(r).toDouble).toInt
+    val unitAreaAbs: Int = unitArea
     val adjacencyNeighborhoodEcoLandscape: EcoLandscape = eco.copy(structure = EcoLandscape.buildStructure(r,eco.composition,1))
     val nu = TopLandscape.numberOfUnits(unitAreaAbs,adjacencyNeighborhoodEcoLandscape.size)
     val (comp,struct) = buildCompositionAndStructure(nu,adjacencyNeighborhoodEcoLandscape,rnd)

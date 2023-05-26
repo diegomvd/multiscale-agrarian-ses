@@ -86,13 +86,13 @@ object HumanPop :
            ):
   Int =
     size - 1
-  def birthPropensity(
+  private def birthPropensity(
                        i_val: Double,
                        popSize: Int
                      ):
   Double =
     i_val + popSize.toDouble
-  def deathPropensity(
+  private def deathPropensity(
                        i_val: Double,
                        popSize: Int,
                        resources: Double,
