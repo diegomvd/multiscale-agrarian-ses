@@ -260,7 +260,7 @@ object EcoLandscape :
                                 eco: EcoLandscape
                               ):
     EcoLandscape =
-      val (propensity,upper_bound): (ListMap[Long,Double],Double) =  SpontaneousPropensities.propensity(0.0, eco.composition, eco.ecoServices, 1.0, LandCover.Natural, EcoUnit.decreasingPES)
+      val (propensity,upper_bound): (ListMap[Long,Double],Double) =  SpontaneousPropensities.propensity(0.0, eco.composition, eco.ecoServices, 1.0, eco.yes, LandCover.Natural, EcoUnit.decreasingPES)
       if upper_bound > 0.0 then
         val x_rnd: Double = rnd.between(0.0,upper_bound)
         val ecoId = eco.selectUnitId(x_rnd, propensity)

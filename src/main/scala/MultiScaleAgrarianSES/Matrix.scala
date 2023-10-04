@@ -136,16 +136,18 @@ case class Matrix(
         event match {
           case EventType.Demographic =>  // only the population and conversion propensities are updated
             val new_popP = new_world.pop.demographicPropensities(0.0,res)
+            val diff = new_popP._2 - popP._2
+            val new_spontP = SpontaneousPropensities.updateInitialValue(spontP,diff)
             val new_tcP = new_world.pop.totalConversionPropensity(res)
 
             if world.t >= tSave then {
               world.saveState(historicTime,historicPopulationSize,historicNaturalArea,historicDegradedArea,historicLoIntAgriculturalArea,historicHiIntAgriculturalArea,historicLandscape)
               val tSaveUpdated: Double = tSave + dtSave
-              rec(new_world,maxT,es,res,new_popP,spontP,new_tcP,tSaveUpdated)
+              rec(new_world,maxT,es,res,new_popP,new_spontP,new_tcP,tSaveUpdated)
             }
             else {
               val tSaveUpdated: Double = tSave
-              rec(new_world,maxT,es,res,new_popP,spontP,new_tcP,tSaveUpdated)
+              rec(new_world,maxT,es,res,new_popP,new_spontP,new_tcP,tSaveUpdated)
             }
 
 

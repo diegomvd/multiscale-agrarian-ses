@@ -47,16 +47,19 @@ object EcoUnit:
   */
   def increasingPES(
                      s: Double,
-                     es: Double
+                     es: Double,
+                     yes: Double
                    ):
   Double =
-    s*es
+    s*scala.math.pow(es,yes)
+
   def decreasingPES(
                      s: Double,
-                     es: Double
+                     es: Double,
+                     yes: Double
                    ):
-  Double = 
-    (1.0-es)*s
-  
+  Double =
+    1-s*scala.math.pow(es,yes)
+
 end EcoUnit
 

@@ -1,5 +1,5 @@
 package MultiScaleAgrarianSES
-
+import scala.math.exp
 /**
  * Implementation of Agriculture: a trait used to extend a Landscape.
  * @todo check mapValues and reduce
@@ -29,7 +29,7 @@ object Agriculture:
   @param yes is the contribution of ecosystem services to low-intensity agricultural production
   @return the total amount of resources produced in the low-intensity units
   */
-  def lowIntResources(
+  private def lowIntResources(
                        comp: Map[Long,EcoUnit],
                        es: Map[Long,Double],
                        yes: Double
@@ -46,7 +46,7 @@ object Agriculture:
   /**
   @return the total amount of resources produced in the high-intensity units
   */
-  def highIntResources(
+  private def highIntResources(
                         comp: Map[Long, EcoUnit],
                         es: Map[Long, Double] // note ecosystem ser ices are not really needed for HI in this version of the model
                       ):
@@ -61,7 +61,7 @@ object Agriculture:
   /**
   @return the total amount of resources produced in the landscape
   */
-  def calculateProduction(
+  private def calculateProduction(
                            comp: Map[Long, EcoUnit],
                            es: Map[Long, Double],
                            yes: Double
@@ -91,17 +91,17 @@ object Agriculture:
    *  @param es is the ecosystem service inflow
    *  @return the resource production in a low intensity unit
    */
-  def lowIntResEquation(
+  private def lowIntResEquation(
                          yes: Double,
                          es: Double
                        ):
   Double =
-    //val x = (1.0 - yes) + yes * es
-    val x = (1.0 - yes) + yes*es
-    x
+    // (1.0 - yes) + yes * es
+    // if es<yes then es/yes else 1.0
+    scala.math.pow(es,yes)
 
 
-  def highIntResEquation():
+  private def highIntResEquation():
   Double =
     1.0
 
