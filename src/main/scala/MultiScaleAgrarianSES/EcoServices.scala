@@ -12,9 +12,6 @@ import org.jgrapht.graph.*
 import org.jgrapht.alg.connectivity.BiconnectivityInspector
 import org.jgrapht.alg.util.NeighborCache
 
-import java.util.function.Predicate
-
-
 /**
 Extends a landscape composed by a graph of EcoUnits with ecosystem services functionalities. The trait serves to
 retrieve a graph of ecosystem services flow and the natural connected components as a metric of fragmentation. All the
@@ -24,7 +21,6 @@ trait EcoServices :
 
   val size: Int
   val scal_exp: Double
-  val area_max: Int
   val composition: Map[Long,EcoUnit]
   val structure: Graph[Long,DefaultEdge]
   val neighborCache: NeighborCache[Long,DefaultEdge] // to avoid re-calculation of neighborhood at each time.
@@ -34,7 +30,7 @@ trait EcoServices :
    * */
   def ecoServices:
   Map[Long, Double]  =
-    EcoServices.ecoServices(this.structure,this.neighborCache,this.composition,this.scal_exp,this.size,this.area_max.toDouble)
+    EcoServices.ecoServices(this.structure,this.neighborCache,this.composition,this.scal_exp,this.size)
 
   /**
    *  @return the set of disconnected natural connected components
@@ -66,21 +62,11 @@ trait EcoServices :
         val new_n: Int = n + 1
         val nId: Long = rnd.shuffle(comp.filter(_._2.matchCover(LandCover.Natural)).keys).take(1).head
         val newComp: Map[Long, EcoUnit] = comp.map { v => if v._1 == nId then (v._1, EcoUnit(nId, LandCover.Degraded)) else v }
-        val newAverage: Double = EcoServices.averageEcoServices(this.structure, this.neighborCache, newComp, this.scal_exp, this.size, this.area_max.toDouble)
-       // println("N. Natural and new average")
-        //println(newComp.count(_._2.matchCover(LandCover.Natural))/this.size.toDouble)
-        //println(newAverage)
+        val newAverage: Double = EcoServices.averageEcoServices(this.structure, this.neighborCache, newComp, this.scal_exp, this.size)
+
         rec(threshold, newAverage, newComp, new_n)
-    //println("N. Natural and average")
-    //println(this.composition.count(_._2.matchCover(LandCover.Natural))/this.size.toDouble)
-    //println(average)
-    //println(EcoServices.averageEcoServices(this.structure, this.neighborCache, this.composition, this.scal_exp, this.size, this.area_max.toDouble))
-    //println(this.averageEcoServices)
-    //println("going to rec")
     val threshold: Double = average * 0.5
-    //println(threshold)
     val n_remove: Double = rec(threshold, average, this.composition, 0)
-    //println(n_remove)
     n_remove / this.composition.count(_._2.matchCover(LandCover.Natural)).toDouble
 
   def robustnessEcoServices(
@@ -154,21 +140,19 @@ object EcoServices :
    */
   def esAreaRelation(
                       a: Double,
-                      z: Double,
-                      a_max: Double
+                      z: Double
                     ):
   Double =
-    if a > a_max then 1.0 else pow(a, z)
+    pow(a, z)
 
   def outgoingEcoServicePerUnit(
                                  ncm: Map[Long,Long],
                                  nam: Map[Long,Double],
-                                 scaling_exp: Double,
-                                 a_max: Double
+                                 scaling_exp: Double
                                ):
   Map[Long, Double] =
     ncm.map{
-      case (node, nccId) => (node, esAreaRelation( nam.getOrElse(nccId, 0.0), scaling_exp,a_max) )
+      case (node, nccId) => (node, esAreaRelation( nam.getOrElse(nccId, 0.0), scaling_exp) )
     }
 
   /**
@@ -196,14 +180,13 @@ object EcoServices :
                    neighborCache: NeighborCache[Long,DefaultEdge],
                    comp: Map[Long,EcoUnit],
                    scal_exp: Double,
-                   size: Int,
-                   a_max: Double
+                   size: Int
                  ):
   Map[Long,Double] =
     val ncc = EcoServices.naturalConnectedComponents(struct, comp)
     val ncm = EcoServices.nodeComponentMembership(ncc)
     val nam = EcoServices.nccNormalizedAreaMap(ncc, size.toDouble)
-    val out = EcoServices.outgoingEcoServicePerUnit(ncm, nam, scal_exp, a_max/size.toDouble)
+    val out = EcoServices.outgoingEcoServicePerUnit(ncm, nam, scal_exp)
     EcoServices.incomingEcoServicePerUnit(struct, neighborCache, out)
 
   def averageEcoServices(
@@ -211,11 +194,10 @@ object EcoServices :
                           neighborCache: NeighborCache[Long,DefaultEdge],
                           comp: Map[Long, EcoUnit],
                           scal_exp: Double,
-                          size: Int,
-                          a_max: Double
+                          size: Int
                         ):
   Double =
-    val es = ecoServices(struct,neighborCache,comp,scal_exp,size,a_max)
+    val es = ecoServices(struct,neighborCache,comp,scal_exp,size)
     es.values.sum / es.size.toDouble
 
 end EcoServices

@@ -16,12 +16,13 @@ object Main extends App:
   //}
 
   // Social-ecological dynamics
-  val res = time {
+  val res: Unit = time {
     val world = simulation.runSocialEcoDynamics
     println(world.historicNaturalArea)
+    println(world.historicPopulationSize)
     //println(world.stateVariability(world.historicNaturalArea,20,10))
-    println(world.stateVariability(world.historicNaturalArea,20,10).max)
-    println(world.stateVariability(world.historicNaturalArea,20,10).sum/world.stateVariability(world.historicNaturalArea,20,10).size.toDouble)
+    //println(world.stateVariability(world.historicNaturalArea,20,10).max)
+    //println(world.stateVariability(world.historicNaturalArea,20,10).sum/world.stateVariability(world.historicNaturalArea,20,10).size.toDouble)
   }
   //println(res)
 
@@ -60,21 +61,20 @@ object Main extends App:
     sim.runSpatialStatistics(rStat).outputSpatialStatisticsESProd
 
   def parameters(
-                  maximumSimulationTime: Double = 400.0,
-                  ecoLandscapeRadius: Int = 10,
+                  maximumSimulationTime: Double = 150.0,
+                  ecoLandscapeRadius: Int = 20,
                   ecoConnectivityRadius: Int = 1, //0.058
                   ecoServicesScalingExp: Double = 0.25,// 0.25,
-                  ecoServicesMaxArea: Double = 1.0,
-                  yEcoService: Double = 0.3,
-                  sensRecovery: Double = 1.0,
-                  sensDegradation: Double = 0.2,
-                  sensFertilityLoss: Double = 0.4,
+                  yEcoService: Double = 0.8,
+                  sensRecovery: Double = 0.2,
+                  sensDegradation: Double = 0.02,
+                  sensFertilityLoss: Double = 0.01,//0.2
                   planningArea: Int = 1,
-                  managementArea: Double = 1.0,//0.0031,//1.0,
-                  sensResourceDemand: Double = 50.0,
+                  managementArea: Double = 0.2,//0.0031,//1.0,
+                  sensResourceDemand: Double = 10.0,
                   nHouseholdsSupportedPerHiIntUnit: Double = 10.0,
-                  fractionOfMngUnitsSparing: Double = 0.0,
-                  initFractionAgricultural: Double = 0.2,
+                  fractionOfMngUnitsSparing: Double = 1.0,
+                  initFractionAgricultural: Double = 0.15,
                   initFractionDegraded: Double = 0.0,
                   seed: Long = 127L
                 ):
@@ -84,7 +84,6 @@ object Main extends App:
       ecoLandscapeRadius,
       ecoConnectivityRadius,
       ecoServicesScalingExp,
-      ecoServicesMaxArea,
       yEcoService,
       sensRecovery,
       sensDegradation,

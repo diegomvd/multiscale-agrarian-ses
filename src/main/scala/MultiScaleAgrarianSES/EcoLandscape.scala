@@ -38,7 +38,6 @@ case class EcoLandscape(
                          size: Int,
                          ecr: Int,
                          scal_exp: Double,
-                         area_max: Int,
                          yes: Double,
                          s_rec: Double,
                          s_deg: Double,
@@ -152,7 +151,6 @@ object EcoLandscape :
              r: Int,
              ecr: Int,
              scal_exp: Double,
-             area_max: Double,
              yes: Double,
              s_rec: Double,
              s_deg: Double,
@@ -163,12 +161,11 @@ object EcoLandscape :
     //val ecr: Int = ModCo.radius( (eca * ModCo.area(r).toDouble).toInt)
     //println(ecr)
     //println(eca * ModCo.area(r).toDouble)
-    val area_max_abs: Int =  (area_max * ModCo.area(r).toDouble).toInt
 
     val comp = buildComposition(r)
     val struct = buildStructure(r,comp,ecr)
     val neighborCache = new NeighborCache[Long,DefaultEdge](struct)
-    EcoLandscape(comp,struct,neighborCache,neighborCache,ModCo.area(r),ecr,scal_exp,area_max_abs,yes,s_rec,s_deg,s_flo)
+    EcoLandscape(comp,struct,neighborCache,neighborCache,ModCo.area(r),ecr,scal_exp,yes,s_rec,s_deg,s_flo)
 
   /*
   * Constructor for the spatial statistics with a radius defining the neighborhood to calculate spatial statistics.
@@ -178,7 +175,6 @@ object EcoLandscape :
              rStats: Int,
              eca: Double,
              scal_exp: Double,
-             area_max: Double,
              yes: Double,
              s_rec: Double,
              s_deg: Double,
@@ -189,7 +185,6 @@ object EcoLandscape :
     val ecr: Int = ModCo.radius((eca * ModCo.area(r).toDouble).toInt)
     println(ecr)
     println(eca * ModCo.area(r).toDouble)
-    val area_max_abs: Int = (area_max * ModCo.area(r).toDouble).toInt
 
     val comp = buildComposition(r)
     val struct = buildStructure(r, comp, ecr)
@@ -198,7 +193,7 @@ object EcoLandscape :
     val structStats = buildStructure(r, comp, rStats)
     val neighborCacheStats = new NeighborCache[Long, DefaultEdge](structStats)
 
-    EcoLandscape(comp, struct, neighborCache, neighborCacheStats, ModCo.area(r), ecr, scal_exp, area_max_abs, yes, s_rec, s_deg, s_flo)
+    EcoLandscape(comp, struct, neighborCache, neighborCacheStats, ModCo.area(r), ecr, scal_exp, yes, s_rec, s_deg, s_flo)
 
   /**
   @param r is the radius of the biophysical landscape
