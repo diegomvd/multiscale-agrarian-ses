@@ -21,7 +21,7 @@ intermediate functions are located in the companion object.
 trait EcoServices :
 
   val size: Int
-  val scal_exp: Double
+  val scaling_exp: Double
   val composition: Map[Long,EcoUnit]
   val structure: Graph[Long,DefaultEdge]
   val neighborCache: NeighborCache[Long,DefaultEdge] // to avoid re-calculation of neighborhood at each time.
@@ -31,7 +31,7 @@ trait EcoServices :
    * */
   def ecoServices:
   Map[Long, Double]  =
-    EcoServices.ecoServices(this.structure,this.neighborCache,this.composition,this.scal_exp,this.size)
+    EcoServices.ecoServices(this.structure,this.neighborCache,this.composition,this.scaling_exp,this.size)
 
   /**
    *  @return the set of disconnected natural connected components
@@ -40,12 +40,12 @@ trait EcoServices :
   Map[Long, Graph[Long, DefaultEdge]] =
     EcoServices.naturalConnectedComponents(this.structure,this.composition)
 
-  def averageEcoServices:
+  private def averageEcoServices:
   Double =
     val es = this.ecoServices
     es.values.sum/es.size.toDouble
 
-  def robustnessEcoServicesOneReplica(
+  private def robustnessEcoServicesOneReplica(
                                        average: Double,
                                        rnd: Random
                                      ):
@@ -63,14 +63,14 @@ trait EcoServices :
         val new_n: Int = n + 1
         val nId: Long = rnd.shuffle(comp.filter(_._2.matchCover(LandCover.Natural)).keys).take(1).head
         val newComp: Map[Long, EcoUnit] = comp.map { v => if v._1 == nId then (v._1, EcoUnit(nId, LandCover.Degraded)) else v }
-        val newAverage: Double = EcoServices.averageEcoServices(this.structure, this.neighborCache, newComp, this.scal_exp, this.size)
+        val newAverage: Double = EcoServices.averageEcoServices(this.structure, this.neighborCache, newComp, this.scaling_exp, this.size)
 
         rec(threshold, newAverage, newComp, new_n)
     val threshold: Double = average * 0.5
     val n_remove: Double = rec(threshold, average, this.composition, 0)
     n_remove / this.composition.count(_._2.matchCover(LandCover.Natural)).toDouble
 
-  def robustnessEcoServices(
+  private def robustnessEcoServices(
                              average: Double,
                              n: Int,
                              rnd: Random
@@ -88,7 +88,7 @@ trait EcoServices :
 
 object EcoServices :
 
-  def naturalConnectedComponents(
+  private def naturalConnectedComponents(
                                   struct: Graph[Long,DefaultEdge],
                                   comp: Map[Long,EcoUnit]
                                 ):
@@ -127,7 +127,7 @@ object EcoServices :
    * @param ncc the map of natural connected components
    * @return the ecounit-ncc map
    * */
-  def nodeComponentMembership(
+  private def nodeComponentMembership(
                                ncc: Map[Long, Graph[Long, DefaultEdge]]
                              ):
   Map[Long, Long] =
@@ -140,7 +140,7 @@ object EcoServices :
    * @param ncc the map of natural connected components
    * @return the map ncc-area
    * */
-  def nccNormalizedAreaMap(
+  private def nccNormalizedAreaMap(
                             ncc: Map[Long, Graph[Long, DefaultEdge]],
                             size: Double
                           ):
@@ -154,14 +154,14 @@ object EcoServices :
    *  @param z is the scaling exponent of the ecosystem services area relationship
    *  @return the value of ecosystem service provision for a component of area a
    */
-  def esAreaRelation(
+  private def esAreaRelation(
                       a: Double,
                       z: Double
                     ):
   Double =
     pow(a, z)
 
-  def outgoingEcoServicePerUnit(
+  private def outgoingEcoServicePerUnit(
                                  ncm: Map[Long,Long],
                                  nam: Map[Long,Double],
                                  scaling_exp: Double
@@ -174,7 +174,7 @@ object EcoServices :
   /**
    * Calculates the ecosystem service
    * @todo double check the function*/
-  def incomingEcoServicePerUnit(
+  private def incomingEcoServicePerUnit(
                                  struct: Graph[Long, DefaultEdge],
                                  neighborCache: NeighborCache[Long,DefaultEdge],
                                  out: Map[Long,Double]
@@ -195,7 +195,7 @@ object EcoServices :
                    struct: Graph[Long,DefaultEdge],
                    neighborCache: NeighborCache[Long,DefaultEdge],
                    comp: Map[Long,EcoUnit],
-                   scal_exp: Double,
+                   scaling_exp: Double,
                    size: Int
                  ):
   Map[Long,Double] =
@@ -203,18 +203,18 @@ object EcoServices :
     // TODO: here filter the ncc by removing low intensity nodes since they do not contribute to their neighbors
     val ncm = EcoServices.nodeComponentMembership(ncc)
     val nam = EcoServices.nccNormalizedAreaMap(ncc, size.toDouble)
-    val out = EcoServices.outgoingEcoServicePerUnit(ncm, nam, scal_exp)
+    val out = EcoServices.outgoingEcoServicePerUnit(ncm, nam, scaling_exp)
     EcoServices.incomingEcoServicePerUnit(struct, neighborCache, out)
 
-  def averageEcoServices(
-                          struct: Graph[Long, DefaultEdge],
-                          neighborCache: NeighborCache[Long,DefaultEdge],
-                          comp: Map[Long, EcoUnit],
-                          scal_exp: Double,
-                          size: Int
+  private def averageEcoServices(
+                                  struct: Graph[Long, DefaultEdge],
+                                  neighborCache: NeighborCache[Long,DefaultEdge],
+                                  comp: Map[Long, EcoUnit],
+                                  scaling_exp: Double,
+                                  size: Int
                         ):
   Double =
-    val es = ecoServices(struct,neighborCache,comp,scal_exp,size)
+    val es = ecoServices(struct,neighborCache,comp,scaling_exp,size)
     es.values.sum / es.size.toDouble
 
 end EcoServices

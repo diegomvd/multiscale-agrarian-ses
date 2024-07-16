@@ -17,7 +17,6 @@ import scala.util.Random
 case class Matrix(
                    t: Double,
                    eco: EcoLandscape,
-                   pln: PlnLandscape,
                    mng: MngLandscape,
                    pop: HumanPop,
                    rnd: Random
@@ -268,7 +267,6 @@ object Matrix :
   /**
    * Matrix constructor at time 0.0.
    * @param eco the ecological landscape.
-   * @param pln the planning landscape.
    * @param mng the management landscape.
    * @param pop the human population.
    * @return an initialized Matrix ready to be simulated.
@@ -277,13 +275,12 @@ object Matrix :
   */
   def apply(
              eco: EcoLandscape,
-             pln: PlnLandscape,
              mng: MngLandscape,
              pop: HumanPop,
              rnd: Random
            ):
   Matrix =
-    Matrix(0.0,eco,pln,mng,pop,rnd)
+    Matrix(0.0,eco,mng,pop,rnd)
 
   /**
    * Updates the Matrix's state by choosing next event time and type from the event propensities.
@@ -336,7 +333,7 @@ object Matrix :
             (world, EventType.NoEvent)
         }
       case EventType.Conversion =>
-        val (ids, units): (Vector[Long], Vector[EcoUnit]) = world.eco.resolveConversionEvent(x_rnd,spontP._2,world.pln,world.mng,tcP)
+        val (ids, units): (Vector[Long], Vector[EcoUnit]) = world.eco.resolveConversionEvent(x_rnd,spontP._2,world.mng,tcP)
         val upd_eco: EcoLandscape = world.eco.update(ids, units)
         (world.copy(t = new_t, eco = upd_eco), EventType.Conversion)
       case _ =>

@@ -32,6 +32,8 @@ extends LandscapeUnit:
    * Determines if this PlnUnit is available for conversion.
    * @param eco the composition of the the EcoLandscape at the base of the PlnLandscape containing this PlnUnit.
    * @return true if available, false if not.
+   *         
+   * @todo: this is not needed
    * */
   def isAvailable(
                    eco: Map[Long,EcoUnit]
@@ -62,6 +64,8 @@ object PlnUnit :
   @param comp the composition of the PlnUnit
   @param eco the composition of the the EcoLandscape at the base of the PlnLandscape containing this PlnUnit.
   @return true if the planning unit can be cultivated, false if not
+   
+   @todo: not needed
   */
   def isAvailable(
                    comp: Vector[Long],

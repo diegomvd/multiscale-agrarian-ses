@@ -5,13 +5,11 @@ import scala.util.Random
 case class Simulation(
                   maximumSimulationTime: Double,
                   ecoLandscapeRadius: Int,
-                  ecoConnectivityRadius: Int,
                   ecoServicesScalingExp: Double,
                   yEcoService: Double,
                   sensRecovery: Double,
                   sensDegradation: Double,
                   sensFertilityLoss: Double,
-                  planningArea: Int,
                   managementArea: Double,
                   sensResourceDemand: Double,
                   nHouseholdsSupportedPerHiIntUnit: Double,
@@ -31,31 +29,23 @@ case class Simulation(
     //println("Building the ecological landscape... ")
     val initEco = EcoLandscape(
       this.ecoLandscapeRadius,
-      this.ecoConnectivityRadius,
       this.ecoServicesScalingExp,
       this.yEcoService,
       this.sensRecovery,
       this.sensDegradation,
       this.sensFertilityLoss
     )
-    //println("Creating planning landscape on top... ")
-    val plnLandscape = PlnLandscape(
-      this.ecoLandscapeRadius,
-      this.planningArea,
-      initEco,
-      this.random
-    )
+    
     //println("Creating management landscape no top... ")
     val mngLandscape = MngLandscape(
       ecoLandscapeRadius,
       this.managementArea,
-      plnLandscape,
+      initEco,
       this.fractionOfMngUnitsSparing,
       this.random
     )
     //println("Initializing ecological composition... ")
     val ecoLandscape = initEco.initialize(
-      plnLandscape,
       mngLandscape,
       this.initFractionAgricultural,
       this.initFractionDegraded,
@@ -72,7 +62,6 @@ case class Simulation(
     // println("Initializing the Matrix... ")
     Matrix(
       ecoLandscape,
-      plnLandscape,
       mngLandscape,
       humanPop,
       this.random
@@ -83,31 +72,23 @@ case class Simulation(
     val initEco = EcoLandscape(
       this.ecoLandscapeRadius,
       rStat,
-      this.ecoConnectivityRadius,
+      1, // @todo: make this connectivity radius a a parameter in the simulation noo tin the model
       this.ecoServicesScalingExp,
       this.yEcoService,
       this.sensRecovery,
       this.sensDegradation,
       this.sensFertilityLoss
     )
-
-    val plnLandscape = PlnLandscape(
-      this.ecoLandscapeRadius,
-      this.planningArea,
-      initEco,
-      this.random
-    )
-
+    
     val mngLandscape = MngLandscape(
       ecoLandscapeRadius,
       this.managementArea,
-      plnLandscape,
+      initEco,
       this.fractionOfMngUnitsSparing,
       this.random
     )
 
     val ecoLandscape = initEco.initialize(
-      plnLandscape,
       mngLandscape,
       this.initFractionAgricultural,
       this.initFractionDegraded,
@@ -116,7 +97,6 @@ case class Simulation(
 
     Matrix(
       ecoLandscape,
-      plnLandscape,
       mngLandscape,
       HumanPop(0.0,0.0,0.0),
       this.random
@@ -129,10 +109,8 @@ object Simulation:
    * */
   def apply(
              ecoLandscapeRadius: Int,
-             ecoConnectivityRadius: Int,
              ecoServicesScalingExp: Double,
              yEcoService: Double,
-             planningArea: Int,
              managementArea: Double,
              nHouseholdsSupportedPerHiIntUnit: Double,
              fractionOfMngUnitsSparing: Double,
@@ -144,13 +122,11 @@ object Simulation:
     Simulation(
       maximumSimulationTime = 0.0,
       ecoLandscapeRadius,
-      ecoConnectivityRadius,
       ecoServicesScalingExp,
       yEcoService,
       sensRecovery = 1.0,
       sensDegradation = 1.0,
       sensFertilityLoss = 1.0,
-      planningArea,
       managementArea,
       sensResourceDemand = 1.0,
       nHouseholdsSupportedPerHiIntUnit,

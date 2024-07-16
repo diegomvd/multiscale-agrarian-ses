@@ -27,8 +27,6 @@ import org.jgrapht.alg.util.NeighborCache
  * with a spatial structure that mimics the spatial processes of the simulation, given the parameters. This effort in
  * coherence, instead of just a random landscape, is to guarantee that the transient at the beginning of the simulation
  * is as short as possible and that the simulation does not start with a regime change.
- * @todo where should the spark context be declared and setted, if at some top level class then I might need to pass it
- *       as argument to a bunch of functions
 */
 case class EcoLandscape(
                          composition: Map[Long,EcoUnit],
@@ -36,8 +34,7 @@ case class EcoLandscape(
                          neighborCache: NeighborCache[Long,DefaultEdge],
                          neighborCacheStats: NeighborCache[Long,DefaultEdge],
                          size: Int,
-                         ecr: Int,
-                         scal_exp: Double,
+                         scaling_exp: Double,
                          yes: Double,
                          s_rec: Double,
                          s_deg: Double,
@@ -61,8 +58,8 @@ case class EcoLandscape(
 
     /**
      * Updates land cover in a single unit following a spontaneous event.
-     * @param vid  is the VertexID to be updated in cover
-     * @param cover is the new cover
+     * @param old_unit  is the VertexID to be updated in cover
+     * @param new_unit is the new cover
      * @return an updated EcoLandscape
      * */
     def update(
@@ -81,7 +78,6 @@ case class EcoLandscape(
      * transition happens.
      * @param x_rnd the random number to sample the probability distribution.
      * @param i_val initial value to calculate the propensity in each MngUnit.
-     * @param pln the planning landscape.
      * @param mng the management landscape.
      * @param tcp the total conversion propensity.
      * @return a tuple with the unit's VertexIds and the resulting cover.
@@ -89,13 +85,12 @@ case class EcoLandscape(
     def resolveConversionEvent(
                                 x_rnd: Double,
                                 i_val: Double,
-                                pln: PlnLandscape,
                                 mng: MngLandscape,
                                 tcp: Double
                               ):
-    (Vector[Long], Vector[EcoUnit]) =
+    (Long, EcoUnit) =
       // First calculate the conversion propensity in each management unit
-      val mngP: ListMap[Long, Double] = mng.propensityOfMngUnits(i_val, tcp, pln.composition, this.composition)
+      val mngP: ListMap[Long, Double] = mng.propensityOfMngUnits(i_val, tcp, this.composition)
       // Get the Id of the selected unit, and the upper bound for the unit's propensity
       val (mngId,upperP): (Long,Double) = mng.selectUnitIdWithPropensity(x_rnd,mngP)
       // Get the lower bound of the unit's propensity: this is not efficient because of ListMap
@@ -104,25 +99,22 @@ case class EcoLandscape(
       val mngU: MngUnit = mng.composition.getOrElse(mngId,MngUnit())
       // Calculate the propensities of planning units within the selected management unit
       val plnP: ListMap[Long, Double] =
-        mngU.propensityOfPlnUnits(lowerP, upperP-lowerP, pln, this.composition)
+        mngU.propensityOfEcoUnits(this.structure, this.neighborCache, lowerP, upperP-lowerP, this.composition)
       // Select a planning unit for conversion
-      val plnId: Long  = pln.selectUnitId(x_rnd, plnP)
-      // Finally, get the Ids of the ecological units to convert to agriculture from the planning unit composition
-      val ecoIds: Vector[Long] = pln.composition.getOrElse(plnId, PlnUnit()).composition
+      val ecoId: Long  = this.selectUnitId(x_rnd, plnP)
       mngU.strategy match
-        case MngStrategy.LandSharing => (ecoIds, ecoIds.map( EcoUnit(_, LandCover.LowIntensity) ) )
-        case MngStrategy.LandSparing => (ecoIds, ecoIds.map( EcoUnit(_, LandCover.HighIntensity) ) )
+        case MngStrategy.LandSharing => (ecoId, EcoUnit(ecoId, LandCover.LowIntensity)  )
+        case MngStrategy.LandSparing => (ecoId, EcoUnit(ecoId, LandCover.HighIntensity)  )
 
 
     def initialize(
-                    pln: PlnLandscape,
                     mng: MngLandscape,
                     f_agr: Double,
                     f_deg: Double,
                     rnd: Random
                   ):
     EcoLandscape =
-      EcoLandscape.initialize(this,pln,mng,f_agr,f_deg,rnd)
+      EcoLandscape.initialize(this,mng,f_agr,f_deg,rnd)
 
     def countNatural: Int = this.composition.count{ case (_,u) => u.matchCover(LandCover.Natural) }
     def countDegraded: Int = this.composition.count{ case (_,u) => u.matchCover(LandCover.Degraded) }
@@ -136,45 +128,42 @@ object EcoLandscape :
   *This method overloads the pre-given apply method and is to be used when initializing the system. The function builds
   *a fully natural EcoLandscape from the EcoLandscape parameter values. Initialization with simulation's initial values
   *is done in initialize function defined in the companion case class.
+ *
   * @constructor
   * @param r is the landscape's radius
-  * @param ecr is the ecological connectivity range and determines biophysical connections between units
-  * @param scal_exp is the scaling exponent of the power-law ecosystem services - area relationship
+  * @param scaling_exp is the scaling exponent of the power-law ecosystem services - area relationship
   * @param yes is the contribution of ecosystem services to production in low-intensity units
   * @param s_rec is land recovery sensitivity to ecosystem service provision
   * @param s_deg is land degradation sensitivity to ecosystem service provision
   * @param s_flo is fertility loss sensitivity to ecosystem service provision
   * @return an EcoLandscape
-  */
+   */
 
+  @tailrec
   def apply(
              r: Int,
-             ecr: Int,
-             scal_exp: Double,
+             scaling_exp: Double,
              yes: Double,
              s_rec: Double,
              s_deg: Double,
              s_flo: Double
            ):
   EcoLandscape =
-    // conversion relative area to absolute radius: NOW I CHANGED ECA TO DIRECTLY ECR BECAUSE IT SUCKED
-    //val ecr: Int = ModCo.radius( (eca * ModCo.area(r).toDouble).toInt)
-    //println(ecr)
-    //println(eca * ModCo.area(r).toDouble)
 
     val comp = buildComposition(r)
-    val struct = buildStructure(r,comp,ecr)
+    val struct = buildStructure(r,comp,1)
     val neighborCache = new NeighborCache[Long,DefaultEdge](struct)
-    EcoLandscape(comp,struct,neighborCache,neighborCache,ModCo.area(r),ecr,scal_exp,yes,s_rec,s_deg,s_flo)
+    EcoLandscape(comp,struct,neighborCache,neighborCache,ModCo.area(r),scaling_exp,yes,s_rec,s_deg,s_flo)
 
   /*
   * Constructor for the spatial statistics with a radius defining the neighborhood to calculate spatial statistics.
   */
+  @tailrec
   def apply(
              r: Int,
              rStats: Int,
              eca: Double,
-             scal_exp: Double,
+             scaling_exp: Double,
              yes: Double,
              s_rec: Double,
              s_deg: Double,
@@ -187,17 +176,16 @@ object EcoLandscape :
     println(eca * ModCo.area(r).toDouble)
 
     val comp = buildComposition(r)
-    val struct = buildStructure(r, comp, ecr)
+    val struct = buildStructure(r, comp, 1)
     val neighborCache = new NeighborCache[Long, DefaultEdge](struct)
 
     val structStats = buildStructure(r, comp, rStats)
     val neighborCacheStats = new NeighborCache[Long, DefaultEdge](structStats)
 
-    EcoLandscape(comp, struct, neighborCache, neighborCacheStats, ModCo.area(r), ecr, scal_exp, yes, s_rec, s_deg, s_flo)
+    EcoLandscape(comp, struct, neighborCache, neighborCacheStats, ModCo.area(r), scaling_exp, yes, s_rec, s_deg, s_flo)
 
   /**
   @param r is the radius of the biophysical landscape
-  @param ecr is the ecological connectivity range
   @return the biophysical composition graph with every unit in a natural state
   */
   def buildComposition(
@@ -209,13 +197,13 @@ object EcoLandscape :
   def buildStructure(
                       r: Int,
                       composition: Map[Long,LandscapeUnit],
-                      ecr: Int
+                      connectivityDistance: Int
                     ):
   Graph[Long, DefaultEdge] =
-    var g: Graph[Long, DefaultEdge] = new SimpleGraph[Long, DefaultEdge](classOf[DefaultEdge])
+    val g: Graph[Long, DefaultEdge] = new SimpleGraph[Long, DefaultEdge](classOf[DefaultEdge])
     val nodes: List[Long] = composition.keys.toList
     nodes.toSet.subsets(2).foreach {
-      s => if ModCo.neighbors(s.head.toInt, r, ecr).contains(s.last) then {
+      s => if ModCo.neighbors(s.head.toInt, r, connectivityDistance).contains(s.last) then {
         g.addVertex(s.head)
         g.addVertex(s.last)
         g.addEdge(s.head, s.last)
@@ -225,13 +213,12 @@ object EcoLandscape :
 
 
   /**
-  @param fagr is fraction of agricultural units in the initial biophysical landscape
-  @param fdeg is fraction of degraded units in the initial biophysical landscape
+  @param f_agr is fraction of agricultural units in the initial biophysical landscape
+  @param f_deg is fraction of degraded units in the initial biophysical landscape
   @return a biophysical landscape initialized according to the simulation parameter values
   */
   def initialize(
                   eco: EcoLandscape,
-                  pln: PlnLandscape,
                   mng: MngLandscape,
                   f_agr: Double,
                   f_deg: Double,
@@ -243,12 +230,11 @@ object EcoLandscape :
     */
     def initializeAgriculturalUnit(
                                     eco: EcoLandscape,
-                                    pln: PlnLandscape,
                                     mng: MngLandscape
                                   ):
     EcoLandscape =
       val x_rnd: Double = rnd.nextDouble( )
-      val res = eco.resolveConversionEvent(x_rnd,0.0,pln,mng,1.0)
+      val res = eco.resolveConversionEvent(x_rnd,0.0,mng,1.0)
       eco.update(res._1,res._2)
 
     def initializeDegradedUnit(
@@ -304,7 +290,6 @@ object EcoLandscape :
     @tailrec
     def rec(
              eco: EcoLandscape,
-             pln: PlnLandscape,
              mng: MngLandscape,
              n_agr: Int,
              n_deg: Int
@@ -316,19 +301,19 @@ object EcoLandscape :
         val n_rnd = rnd.nextInt(n)
         if n_rnd < n_agr then {
           val old_agr: Int = eco.countAgricultural
-          val upd_eco: EcoLandscape = initializeAgriculturalUnit(eco, pln, mng)
+          val upd_eco: EcoLandscape = initializeAgriculturalUnit(eco, mng)
           val new_agr: Int = upd_eco.countAgricultural
           val step: Int = new_agr - old_agr
           val n_remaining: (Int, Int) = updateRemaining((n_agr, n_deg), EventType.Conversion, step)
-          rec(upd_eco, pln, mng, n_remaining._1, n_remaining._2)
+          rec(upd_eco,  mng, n_remaining._1, n_remaining._2)
         } else {
           val upd_eco = initializeDegradedUnit(eco)
           val n_remaining: (Int, Int) = updateRemaining((n_agr, n_deg), EventType.Degradation, 1)
-          rec(upd_eco, pln, mng, n_remaining._1, n_remaining._2)
+          rec(upd_eco, mng, n_remaining._1, n_remaining._2)
         }
       }
     val n_agr: Int = (eco.size * f_agr).toInt
     val n_deg: Int = (eco.size * f_deg).toInt
-    rec(eco, pln, mng, n_agr, n_deg)
-          
+    rec(eco, mng, n_agr, n_deg)
+
 end EcoLandscape

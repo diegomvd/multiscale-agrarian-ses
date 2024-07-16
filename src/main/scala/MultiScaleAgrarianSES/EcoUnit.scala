@@ -1,5 +1,8 @@
 package MultiScaleAgrarianSES
 
+import scala.math.pow
+import scala.math.max
+
 /**
 Implementation of the Ecological Units. EcoUnits are the elementary constituents of an EcoLandscape and are defined by
 their land cover.
@@ -60,6 +63,19 @@ object EcoUnit:
                    ):
   Double =
     1-s*scala.math.pow(es,yes)
+
+
+  /**
+   * @param nn         is the number of neighbors that give weight to the clustering
+   * @param clustering is the clustering coefficient
+   * @return the clustering weight
+   */
+  def weightExpression(
+                        nn: Int,
+                        clustering: Double
+                      ):
+  Double =
+    pow(max(0.1, nn), clustering)
 
 end EcoUnit
 

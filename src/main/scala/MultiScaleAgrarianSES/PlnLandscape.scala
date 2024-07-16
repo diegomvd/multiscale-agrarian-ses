@@ -18,6 +18,8 @@ MngLandscape. It is composed by a collection of PlnUnits.
 
 @todo I am not sure that adjacency is determined correctly in the voronoi tesselation because neighborhood in the
       EcoLandscape is functional connectivity rather than adjacency
+ 
+ @todo Change this to management landscape
 */
 case class PlnLandscape(
                          composition: Map[Long,PlnUnit],

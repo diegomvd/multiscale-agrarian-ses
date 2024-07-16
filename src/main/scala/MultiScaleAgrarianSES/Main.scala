@@ -63,13 +63,11 @@ object Main extends App:
   def parameters(
                   maximumSimulationTime: Double = 150.0,
                   ecoLandscapeRadius: Int = 20,
-                  ecoConnectivityRadius: Int = 1, //0.058
                   ecoServicesScalingExp: Double = 0.25,// 0.25,
                   yEcoService: Double = 0.8,
                   sensRecovery: Double = 0.2,
                   sensDegradation: Double = 0.02,
                   sensFertilityLoss: Double = 0.01,//0.2
-                  planningArea: Int = 1,
                   managementArea: Double = 0.2,//0.0031,//1.0,
                   sensResourceDemand: Double = 10.0,
                   nHouseholdsSupportedPerHiIntUnit: Double = 10.0,
@@ -82,13 +80,11 @@ object Main extends App:
     new Simulation(
       maximumSimulationTime,
       ecoLandscapeRadius,
-      ecoConnectivityRadius,
       ecoServicesScalingExp,
       yEcoService,
       sensRecovery,
       sensDegradation,
       sensFertilityLoss,
-      planningArea,
       managementArea,
       sensResourceDemand,
       nHouseholdsSupportedPerHiIntUnit,

@@ -2,10 +2,11 @@ package MultiScaleAgrarianSES
 
 import scala.collection.immutable.ListMap
 import scala.util.Random
-import scala.reflect._
+import scala.reflect.*
+import org.jgrapht.*
+import org.jgrapht.graph.*
 
-import org.jgrapht._
-import org.jgrapht.graph._
+import scala.annotation.tailrec
 
 /**
 Implementation of the Management Landscape, composed by Management Units. A MngLandscape is extends a TopLandscape and
@@ -25,44 +26,42 @@ case class MngLandscape(
   type A = MngUnit
   /**
    * Calculates the propensity of choosing each MngUnit for agricultural expansion.
-   * @param ival initial value for the cumulative sum of conversion propensities in each MngUnit
+   * @param i_val initial value for the cumulative sum of conversion propensities in each MngUnit
    * @param tcp total conversion propensity determined by resource demand
    * @return a ListMap containing cumulative propensity for choosing each management unit
   */
   def propensityOfMngUnits(
                             i_val: Double,
                             tcp: Double,
-                            pln: Map[Long,PlnUnit],
                             eco: Map[Long,EcoUnit]
                           ):
   ListMap[Long,Double] =
-    val propensities: Map[Long,Double] = MngLandscape.probabilities(this.composition,pln,eco,tcp)
+    val propensities: Map[Long,Double] = MngLandscape.probabilities(this.composition,eco,tcp)
     propensities.scanLeft((-1L, i_val))( (pre, now) => (now._1, now._2 + pre._2)).tail.to(ListMap)
 
 object MngLandscape :
   /**
    * MngLandscape constructor
+ *
    * @constructor
-   * @param scale the relative scale of this management landscape to the planning landscape
-   * @param pln the planning landscape serving as base for this management landscape
+   * @param averageUnitArea the average area of a management unit relative to the eco landscape area.
    * @param fs the fraction of land-sparing MngUnits
    * @return an instance of MngLandscape
    *
-   * @todo need to check this function depending on tesselation
    */
+  @tailrec
   def apply(
              ecoRadius: Int,
-             unitArea: Double,
-             pln: PlnLandscape,
+             averageUnitArea: Double,
+             eco: EcoLandscape,
              fs: Double,
              rnd: Random
            ):
   MngLandscape =
     // Transform relative management area to absolute
-    val unitAreaAbs : Int = (unitArea * ModCo.area(ecoRadius).toDouble).toInt
+    val unitAreaAbs : Int = (averageUnitArea * ModCo.area(ecoRadius).toDouble).toInt
     val nm = TopLandscape.numberOfUnits(unitAreaAbs,ModCo.area(ecoRadius))
-    if nm > pln.size then println("There are more management units than planning units, tesselation of the planning landscape will yield an error.")
-    val (compInit, struct): (Map[Long,Vector[Long]], Graph[Long,DefaultEdge]) = pln.tesselate(nm,rnd)
+    val (compInit, struct): (Map[Long,Vector[Long]], Graph[Long,DefaultEdge]) = eco.tesselate(nm,rnd)
     val n_sparing: Int = (fs * nm).toInt
     val sparing_ids: Vector[Long] = rnd.shuffle(compInit.keys).take( n_sparing ).toVector
     val comp = compInit.map{
@@ -76,19 +75,17 @@ object MngLandscape :
   /**
    *  Calculate the relative probabilities for each MngUnit to be selected for a conversion event.
    * @param mng the management landscape's composition
-   * @param pln the planning landscape's composition
    * @param eco the ecological landscape's composition
    * @return an RDD with the relative conversion probabilities of each management unit
    * @note At the current modeling stage MngUnits are selected with uniform probability
   */
-  def probabilities(
+  private def probabilities(
                      mng: Map[Long,MngUnit],
-                     pln: Map[Long,PlnUnit],
                      eco: Map[Long,EcoUnit],
                      tcP: Double
                    ):
   Map[Long,Double] =
-    val available_units = mng.filter( _._2.isAvailable(pln,eco) )
+    val available_units = mng.filter( _._2.isAvailable(eco) )
     available_units.map{ case (id,_) => (id, 1.0/available_units.size*tcP) }
 
 end MngLandscape
