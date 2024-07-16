@@ -20,6 +20,9 @@ object Main extends App:
     val world = simulation.runSocialEcoDynamics
     println(world.historicNaturalArea)
     println(world.historicPopulationSize)
+    println(world.historicDegradedArea)
+    println(world.historicHiIntAgriculturalArea)
+    println(world.historicLoIntAgriculturalArea)
     //println(world.stateVariability(world.historicNaturalArea,20,10))
     //println(world.stateVariability(world.historicNaturalArea,20,10).max)
     //println(world.stateVariability(world.historicNaturalArea,20,10).sum/world.stateVariability(world.historicNaturalArea,20,10).size.toDouble)
@@ -61,19 +64,19 @@ object Main extends App:
     sim.runSpatialStatistics(rStat).outputSpatialStatisticsESProd
 
   def parameters(
-                  maximumSimulationTime: Double = 150.0,
-                  ecoLandscapeRadius: Int = 20,
+                  maximumSimulationTime: Double = 100.0,
+                  ecoLandscapeRadius: Int = 10,
                   ecoServicesScalingExp: Double = 0.25,// 0.25,
-                  yEcoService: Double = 0.8,
-                  sensRecovery: Double = 0.2,
-                  sensDegradation: Double = 0.02,
-                  sensFertilityLoss: Double = 0.01,//0.2
-                  managementArea: Double = 0.2,//0.0031,//1.0,
-                  sensResourceDemand: Double = 10.0,
+                  yEcoService: Double = 0.25,
+                  sensRecovery: Double = 1.0,
+                  sensDegradation: Double = 1.0,
+                  sensFertilityLoss: Double = 1.0,//0.2
+                  managementArea: Double = 0.1,//0.0031,//1.0,
+                  sensResourceDemand: Double = 5.0,
                   nHouseholdsSupportedPerHiIntUnit: Double = 10.0,
-                  fractionOfMngUnitsSparing: Double = 1.0,
-                  initFractionAgricultural: Double = 0.15,
-                  initFractionDegraded: Double = 0.0,
+                  fractionOfMngUnitsSparing: Double = 0.0,
+                  initFractionAgricultural: Double = 0.1,
+                  initFractionDegraded: Double = 0.1,
                   seed: Long = 127L
                 ):
   Simulation =

@@ -333,7 +333,7 @@ object Matrix :
             (world, EventType.NoEvent)
         }
       case EventType.Conversion =>
-        val (ids, units): (Vector[Long], Vector[EcoUnit]) = world.eco.resolveConversionEvent(x_rnd,spontP._2,world.mng,tcP)
+        val (ids, units): (Long, EcoUnit) = world.eco.resolveConversionEvent(x_rnd,spontP._2,world.mng,tcP)
         val upd_eco: EcoLandscape = world.eco.update(ids, units)
         (world.copy(t = new_t, eco = upd_eco), EventType.Conversion)
       case _ =>

@@ -1,6 +1,6 @@
 package MultiScaleAgrarianSES
 
-import MultiScaleAgrarianSES.LandCover.Natural
+import MultiScaleAgrarianSES.LandCover.{LowIntensity, Natural}
 
 import scala.util.Random
 import scala.math.pow
@@ -8,6 +8,7 @@ import scala.annotation.tailrec
 import scala.reflect.*
 import scala.jdk.CollectionConverters.SetHasAsScala
 import scala.jdk.CollectionConverters.MutableSetHasAsJava
+import scala.jdk.CollectionConverters.IterableHasAsJava
 import org.jgrapht.*
 import org.jgrapht.graph.*
 import org.jgrapht.alg.connectivity.BiconnectivityInspector
@@ -93,33 +94,26 @@ object EcoServices :
                                   comp: Map[Long,EcoUnit]
                                 ):
   Map[Long, Graph[Long, DefaultEdge]] =
-    // TODO: include landcover low intensity as connectivity preserver: might need a match covers function
-    val naturalUnits: java.util.Set[Long] = struct.vertexSet().asScala.filter( comp.getOrElse(_,EcoUnit()).matchCover(LandCover.Natural)).asJava
-    val naturalLandscape: Graph[Long,DefaultEdge] = new AsSubgraph[Long,DefaultEdge](struct,naturalUnits)
-    val naturalConnectivity: BiconnectivityInspector[Long,DefaultEdge] = new BiconnectivityInspector[Long,DefaultEdge](naturalLandscape)
+
+    val connectingUnits: java.util.Set[Long] = struct.vertexSet().asScala.filter( comp.getOrElse(_,EcoUnit()).matchCover(LandCover.Natural,LandCover.LowIntensity) ).asJava
+    val connectingLandscape: Graph[Long,DefaultEdge] = new AsSubgraph[Long,DefaultEdge](struct,connectingUnits)
+    val connectivity: BiconnectivityInspector[Long,DefaultEdge] = new BiconnectivityInspector[Long,DefaultEdge](connectingLandscape)
+
     // TODO: better to include here information on whether a unit is natural or low intensity or directly remove non natural from the graph so actual natural area cna be easily calculated later
-    val ncc = naturalConnectivity.getConnectedComponents.asScala.toSet
+    val components = connectivity.getConnectedComponents.asScala.toSet
       .zipWithIndex
       .map(_.swap)
       .map { case (nccId, g) => (nccId.toLong, g) }
       .toMap
-
-    // TODO: check this here
-    // something like:
-    val naturalNodes = ncc.map{
-      case (nccId, g) =>
-        (nccId, g.vertexSet().asScala.filter(id => comp.getOrElse(id,EcoUnit()).matchCover(LandCover.Natural))) // don't know if indices in connected components are kept or redone
+    
+    val naturalConnectedComponents = components.map{
+      case (cId, g) =>
+        val naturalNodes = g.vertexSet().asScala.filter(id => comp.getOrElse(id,EcoUnit()).matchCover(LandCover.Natural)).asJava
+        val naturalGraph : Graph[Long,DefaultEdge] = new AsSubgraph[Long,DefaultEdge](g,naturalNodes)
+        (cId, naturalGraph) // don't know if indices in connected components are kept or redone
     }
 
-    ncc.map{
-      case (nccId, g) =>
-        (nccId, g.removeAllVertices( naturalNodes.getOrElse(nccId,Set()).asJava ) )
-    }
-
-   // println("Size of largest component:")
-    //val max_size: Double = ncc.map( m =>  m._2.vertexSet().size ).toList.max.toDouble/comp.size.toDouble
-   // println(max_size)
-    ncc
+    naturalConnectedComponents
 
   /**
    * Creates a Map with EcoUnits as keys and NCC id as value.
@@ -200,7 +194,6 @@ object EcoServices :
                  ):
   Map[Long,Double] =
     val ncc = EcoServices.naturalConnectedComponents(struct, comp)
-    // TODO: here filter the ncc by removing low intensity nodes since they do not contribute to their neighbors
     val ncm = EcoServices.nodeComponentMembership(ncc)
     val nam = EcoServices.nccNormalizedAreaMap(ncc, size.toDouble)
     val out = EcoServices.outgoingEcoServicePerUnit(ncm, nam, scaling_exp)

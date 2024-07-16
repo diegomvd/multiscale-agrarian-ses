@@ -139,7 +139,6 @@ object EcoLandscape :
   * @return an EcoLandscape
    */
 
-  @tailrec
   def apply(
              r: Int,
              scaling_exp: Double,
@@ -158,7 +157,6 @@ object EcoLandscape :
   /*
   * Constructor for the spatial statistics with a radius defining the neighborhood to calculate spatial statistics.
   */
-  @tailrec
   def apply(
              r: Int,
              rStats: Int,

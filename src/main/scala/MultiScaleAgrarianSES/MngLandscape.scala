@@ -49,7 +49,6 @@ object MngLandscape :
    * @return an instance of MngLandscape
    *
    */
-  @tailrec
   def apply(
              ecoRadius: Int,
              averageUnitArea: Double,

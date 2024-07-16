@@ -25,6 +25,13 @@ case class EcoUnit(
   Boolean =
     EcoUnit.matchCover(this.cover,c)
 
+  def matchCover(
+                  c1: LandCover,
+                  c2: LandCover
+                ):
+  Boolean =
+    EcoUnit.matchCover(this.cover, c1, c2)
+
 object EcoUnit:
 
   def apply():
@@ -42,6 +49,19 @@ object EcoUnit:
                 ):
   Boolean =
     c1 == c2
+
+  /**
+   * @param c1 first land cover type
+   * @param c2 second land cover type
+   * @return true if both covers are equal, false if not
+   */
+  def matchCover(
+                  c1: LandCover,
+                  c2: LandCover,
+                  c3: LandCover
+                ):
+  Boolean =
+    c1 == c2  || c1 == c3
 
   /**
   @param s is the sensitivity to ecosystem service inflow
@@ -62,7 +82,7 @@ object EcoUnit:
                      yes: Double
                    ):
   Double =
-    1-s*scala.math.pow(es,yes)
+    s*(1-scala.math.pow(es,yes))
 
 
   /**
